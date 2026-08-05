@@ -39,6 +39,13 @@ QR code -> GitHub Pages (index.html) -> fetch(POST) -> Google Apps Script Web Ap
 3. Click **Setup -> Set Admin Password** and enter a password
 4. This password unlocks the **Admin Dashboard** (login link in the homepage footer) for viewing stats, records, CSV export, and bulk import
 
+### 4. Add the Admin Studio UI
+
+1. In the Apps Script editor, click **+** next to Files -> HTML
+2. Name it exactly `Index`
+3. Delete the default content and paste the contents of `Index.html`
+4. Save. Visiting your **Web App URL** (with no query string) now opens the **Admin Studio** — password-protected dashboard with Records, Bulk Import, and Settings tabs
+
 ### 4. Deploy to GitHub
 
 1. Push this folder to a GitHub repo
@@ -85,3 +92,19 @@ Full Name, Mobile, Email, Home District, Category, Institution, Profession, Cont
 ```
 
 Blank `Category` defaults to **Microfinance**. Recommended batch size: 5,000 rows per import.
+
+## Roadmap (step by step)
+
+- **Step 1 (done):** Forms portal (4 forms) + Google Sheet database + Admin Studio UI
+- **Step 2:** Confessions review & publish queue (Blogger + Facebook) + staff field reports
+- **Step 3:** Content Studio (Gemini AI article generation + manual publish)
+- **Step 4:** Full Laghubitta Khabar platform redesign
+
+The Studio's **Settings** tab already stores `BLOG_ID`, `FB_PAGE_ID`, `FB_TOKEN`, `GEMINI_API_KEY`, and `FOLDER_ID` in Script Properties, ready for Steps 2-3.
+
+## Project Files
+
+- `Code.gs` — Apps Script backend (form intake, admin auth, REST + Studio routes)
+- `Index.html` — Admin Studio UI (served from the Web App URL)
+- `index.html` — public forms portal on GitHub Pages
+- `README.md` — this file

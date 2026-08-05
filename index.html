@@ -1,788 +1,328 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+<base target="_top">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Laghubitta Khabar — Help &amp; Career Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laghubitta Khabar — Admin Studio</title>
 <style>
-:root{--navy:#0b2545;--navy-2:#123a6b;--gold:#c8952b;--gold-light:#f0e6d0;--paper:#f7f5f0;--ink:#1c2530;--line:#d7d2c4;--ok:#1e7a3d;--err:#b3261e;--white:#fff;--shadow:0 4px 24px rgba(11,37,69,.08);--shadow-lg:0 12px 40px rgba(11,37,69,.12)}
+:root{--navy:#0b2545;--navy-2:#123a6b;--gold:#c8952b;--gold-light:#f0e6d0;--paper:#f4f6f9;--ink:#1c2530;--line:#d7dce3;--ok:#1e7a3d;--err:#b3261e;--white:#fff;--muted:#8a93a3}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink)}
-.home{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.home.hidden{display:none}
-.hero{text-align:center;margin-bottom:32px}
-.hero .logo{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy-2));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;color:var(--gold);font-weight:700;box-shadow:0 4px 20px rgba(11,37,69,.2)}
-.hero h1{font-size:22px;color:var(--navy);margin:0 0 4px;font-weight:800}
-.hero p{font-size:13px;color:#777;margin:0}
-.hero .np{font-size:12px;color:#999;margin-top:4px}
-.hero .badge{display:inline-block;background:var(--gold);color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;margin-top:10px;letter-spacing:.05em}
-.portal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:560px;width:100%}
-.portal-card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .25s ease;position:relative;overflow:hidden}
-.portal-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px}
-.portal-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:transparent}
-.portal-card .icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px;transition:transform .25s}
-.portal-card:hover .icon{transform:scale(1.08)}
-.portal-card h3{font-size:14px;font-weight:700;margin:0 0 4px;color:var(--navy)}
-.portal-card .np{font-size:12px;font-weight:600;color:var(--gold);margin:0 0 6px}
-.portal-card p{font-size:11px;color:#888;line-height:1.4;margin:0}
-.portal-card .arrow{display:block;margin-top:12px;font-size:18px;color:var(--gold);transition:transform .25s}
-.portal-card:hover .arrow{transform:translateX(4px)}
-.pc-job .icon{background:#e8f4ec;color:var(--ok)}.pc-job::before{background:var(--ok)}
-.pc-help .icon{background:#fbeceb;color:var(--err)}.pc-help::before{background:var(--err)}
-.pc-senna .icon{background:var(--gold-light);color:var(--gold)}.pc-senna::before{background:var(--gold)}
-.pc-conf .icon{background:#f3ecfa;color:#6a3fa0}.pc-conf::before{background:#6a3fa0}
-.home-footer{text-align:center;margin-top:28px;font-size:10px;color:#aaa;line-height:1.6}
-.home-footer a{color:var(--navy-2);text-decoration:none}
-
-.portal{display:none;min-height:100vh}
-.portal.active{display:block}
-.topbar{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;padding:16px 20px 20px;text-align:center;position:relative}
-.topbar .back{position:absolute;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-.topbar .eyebrow{letter-spacing:.14em;text-transform:uppercase;font-size:10px;color:var(--gold);font-weight:600}
-.topbar h1{margin:4px 0 2px;font-size:17px;font-weight:700}
-.topbar .np{font-size:12px;opacity:.85;margin:0 0 2px;color:var(--gold)}
-.topbar p{margin:0;font-size:12px;opacity:.8}
-.sec{max-width:680px;margin:0 auto;padding:20px 16px}
-.card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:22px;margin-top:16px;box-shadow:0 2px 12px rgba(11,37,69,.04);transition:box-shadow .2s}
-.card:hover{box-shadow:var(--shadow)}
-.card h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--navy-2);margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:8px}
-.card h2 .hicon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
-label{display:block;font-size:12px;font-weight:600;margin:14px 0 5px;color:var(--navy)}
-label .np{font-size:11px;color:#999;font-weight:400;margin-left:4px}
-label .req{color:var(--err)}
-input[type=text],input[type=tel],input[type=email],select,textarea{width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;background:var(--white);color:var(--ink);font-family:inherit;transition:border-color .2s,box-shadow .2s}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy-2);box-shadow:0 0 0 3px rgba(18,58,107,.08)}
-textarea{resize:vertical;min-height:90px}
-.rg{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-.rg label{display:flex;align-items:flex-start;gap:8px;font-weight:400;font-size:13px;padding:9px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;margin:0;transition:.2s;color:var(--ink)}
-.rg label:hover{border-color:var(--navy-2);background:#f8f9fa}
-.rg label:has(input:checked){border-color:var(--navy);background:#f0f4f8;font-weight:600;box-shadow:0 0 0 2px rgba(11,37,69,.06)}
-.rg input{margin:0;accent-color:var(--navy)}
-.ck{display:flex;align-items:flex-start;gap:8px;font-weight:400;font-size:13px;margin-top:14px;padding:12px;background:#fafaf8;border:1.5px solid var(--line);border-radius:10px;cursor:pointer}
-.ck input{margin-top:2px;accent-color:var(--navy)}
-.submit-btn{width:100%;background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border:none;padding:14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:20px;transition:all .2s;box-shadow:0 2px 12px rgba(11,37,69,.15)}
-.submit-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(11,37,69,.2)}
-.submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.msg{margin-top:12px;padding:11px 14px;border-radius:10px;font-size:12px;display:none}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink);font-size:14px}
+/* ---- Login overlay ---- */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy),var(--navy-2));display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+#loginScreen.hidden{display:none}
+.login-card{background:#fff;border-radius:16px;padding:36px 30px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card .logo{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy-2));color:var(--gold);font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.login-card h1{text-align:center;font-size:18px;color:var(--navy)}
+.login-card p{text-align:center;font-size:12px;color:#999;margin:4px 0 20px}
+label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px}
+input[type=text],input[type=password],textarea,select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff;transition:.2s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy-2);box-shadow:0 0 0 3px rgba(18,58,107,.08)}
+.btn{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border:none;padding:12px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
+.btn:hover{box-shadow:0 4px 14px rgba(11,37,69,.25)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:#fff;border:1.5px solid var(--navy-2);color:var(--navy-2);padding:9px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-ghost:hover{background:var(--navy-2);color:#fff}
+.msg{display:none;padding:11px 13px;border-radius:9px;font-size:12px;margin-top:12px}
 .msg.show{display:block}
 .msg.ok{background:#eaf6ee;color:var(--ok);border:1px solid #bfe3c9}
 .msg.err{background:#fbeceb;color:var(--err);border:1px solid #f2c6c3}
-.footer-note{text-align:center;font-size:10px;color:#bbb;margin-top:24px;padding-bottom:24px;line-height:1.6}
-.success-screen{text-align:center;padding:40px 16px}
-.success-screen .check{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--ok),#28a745);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:26px;box-shadow:0 4px 16px rgba(30,122,61,.2)}
-.success-screen h2{color:var(--navy);font-size:18px}
-.success-screen .np{color:var(--gold);font-weight:600;font-size:13px}
-.success-screen p{color:#666;font-size:13px;margin-top:6px}
-.note{background:var(--gold-light);border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-size:12px;color:#6b5320;margin-top:16px;line-height:1.5}
-.note a{color:var(--navy-2)}
-.admin-link{display:inline-block;margin-top:10px;font-size:11px;color:var(--navy-2);text-decoration:none;opacity:.7}
-.admin-link:hover{opacity:1}
-.ad-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
-.ad-stat{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
-.ad-stat b{display:block;font-size:20px;color:var(--navy)}
-.ad-stat span{font-size:10px;color:#888}
-.ad-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-.ad-tab{background:var(--white);border:1.5px solid var(--line);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--navy);transition:.2s}
-.ad-tab:hover{border-color:var(--navy-2)}
-.ad-tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.ad-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.btn2{background:var(--white);border:1.5px solid var(--navy-2);color:var(--navy-2);padding:9px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
-.btn2:hover{background:var(--navy-2);color:#fff}
-.ad-wrap{max-height:480px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:12px}
-table.ad-table{width:100%;border-collapse:collapse;font-size:11px}
-.ad-table th,.ad-table td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
-.ad-table th{background:var(--navy);color:#fff;position:sticky;top:0;z-index:1}
-.ad-table tr:nth-child(even){background:#fafaf8}
-.ad-empty{text-align:center;color:#999;padding:24px;font-size:12px}
-@media(max-width:480px){.portal-grid{grid-template-columns:1fr;max-width:320px}.hero h1{font-size:18px}.ad-stats{grid-template-columns:repeat(2,1fr)}}
+/* ---- Layout ---- */
+#app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--navy);color:#fff;padding:20px 14px;position:fixed;top:0;bottom:0;left:0;display:flex;flex-direction:column;z-index:10}
+.sidebar .brand{display:flex;align-items:center;gap:10px;padding:6px 10px 18px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:14px}
+.sidebar .brand .bl{width:36px;height:36px;border-radius:50%;background:var(--gold);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar .brand b{font-size:14px;display:block;line-height:1.2}
+.sidebar .brand span{font-size:10px;color:var(--gold);letter-spacing:.06em}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;cursor:pointer;font-size:13px;color:#c9d4e4;margin-bottom:4px;transition:.2s;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.on{background:var(--gold);color:#fff;font-weight:700}
+.nav-item.locked{opacity:.45;cursor:not-allowed}
+.nav-item .tag{margin-left:auto;font-size:9px;background:rgba(255,255,255,.15);padding:2px 7px;border-radius:10px;letter-spacing:.04em}
+.sidebar .foot{margin-top:auto;font-size:10px;color:#7f8ba0;padding:10px;line-height:1.6;border-top:1px solid rgba(255,255,255,.1)}
+.main{margin-left:250px;flex:1;padding:28px 30px}
+.page{display:none}
+.page.on{display:block}
+.page h1{font-size:20px;color:var(--navy);margin-bottom:4px}
+.page .sub{font-size:12px;color:var(--muted);margin-bottom:22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 2px 10px rgba(11,37,69,.05)}
+.card h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--navy-2);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:8px}
+/* Dashboard */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;border-top:4px solid var(--navy)}
+.stat.green{border-top-color:var(--ok)}.stat.red{border-top-color:var(--err)}.stat.gold{border-top-color:var(--gold)}.stat.purple{border-top-color:#6a3fa0}
+.stat b{display:block;font-size:26px;color:var(--navy);margin-bottom:2px}
+.stat span{font-size:11px;color:var(--muted)}
+/* Records */
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.pill{background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--navy);transition:.2s}
+.pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.table-wrap{max-height:480px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--navy);color:#fff;position:sticky;top:0;z-index:1;font-weight:600}
+tr:nth-child(even){background:#fafbfc}
+.empty{text-align:center;color:#999;padding:28px;font-size:12px}
+.count-note{font-size:11px;color:var(--muted);margin-top:10px}
+/* Import */
+.hint{background:var(--gold-light);border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-size:12px;color:#6b5320;line-height:1.6;margin-bottom:14px}
+textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+/* Settings */
+.set-row{margin-bottom:16px}
+.set-row .lbl{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px}
+.set-row .hlp{font-size:11px;color:var(--muted);margin-top:4px}
+.locked-note{margin-top:22px;background:#f7f8fa;border:1px dashed var(--line);border-radius:10px;padding:14px;font-size:12px;color:var(--muted);line-height:1.7}
+@media(max-width:820px){.sidebar{width:60px;padding:16px 8px}.sidebar .brand b,.sidebar .brand span,.nav-item span.txt,.nav-item .tag,.sidebar .foot{display:none}.sidebar .nav-item{justify-content:center;padding:12px}.main{margin-left:60px;padding:18px}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 
-<!-- ==================== HOME ==================== -->
-<div class="home" id="homePage">
-  <div class="hero">
+<!-- ==================== LOGIN ==================== -->
+<div id="loginScreen">
+  <div class="login-card">
     <div class="logo">LK</div>
-    <h1>Help, Career &amp; Network Portal</h1>
-    <p>Laghubitta Khabar — लघुवित्त खबर</p>
-    <div class="np">सहयोग, जागिर र नेटवर्क</div>
-    <div class="badge">A SENNA Network Initiative</div>
-  </div>
-  <div class="portal-grid">
-    <div class="portal-card pc-job" onclick="openPortal('job')">
-      <div class="icon">&#128188;</div>
-      <h3>Job Career Sathi</h3>
-      <div class="np">जागिर करियर साथी</div>
-      <p>Get free CV, cover letter &amp; exam prep help for MFI/bank jobs</p>
-      <span class="arrow">&rarr;</span>
-    </div>
-    <div class="portal-card pc-help" onclick="openPortal('help')">
-      <div class="icon">&#128172;</div>
-      <h3>Client Help Model</h3>
-      <div class="np">ग्राहक सहायता</div>
-      <p>Report MFI/coop issues — harassment, illegal interest, CIB problems</p>
-      <span class="arrow">&rarr;</span>
-    </div>
-    <div class="portal-card pc-senna" onclick="openPortal('senna')">
-      <div class="icon">&#128101;</div>
-      <h3>SENNA Network</h3>
-      <div class="np">सेन्ना नेटवर्क</div>
-      <p>Join the genuine people's network supporting the community</p>
-      <span class="arrow">&rarr;</span>
-    </div>
-    <div class="portal-card pc-conf" onclick="openPortal('conf')">
-      <div class="icon">&#127917;</div>
-      <h3>Confession</h3>
-      <div class="np">गोप्य भनाइ</div>
-      <p>Share your experience anonymously — no name, no judgment</p>
-      <span class="arrow">&rarr;</span>
-    </div>
-  </div>
-  <div class="home-footer">
-    Independent public welfare platform &middot; लघुवित्त खबर<br>
-    <a href="https://laghubittakhabar.pages.dev">laghubittakhabar.pages.dev</a><br>
-    <a href="#" class="admin-link" onclick="openPortal('admin');return false;">Admin Login</a>
+    <h1>Admin Studio</h1>
+    <p>लघुवित्त खबर — व्यवस्थापक प्यानल</p>
+    <label>Admin Password</label>
+    <input type="password" id="pass" onkeydown="if(event.key==='Enter')doLogin()" placeholder="Enter admin password">
+    <button class="btn" id="loginBtn" style="width:100%;margin-top:14px" onclick="doLogin()">Login / लगइन</button>
+    <div class="msg" id="loginMsg"></div>
   </div>
 </div>
 
-<!-- ==================== JOB CAREER SATHI ==================== -->
-<div class="portal" id="portal-job">
-  <div class="topbar">
-    <button class="back" onclick="goHome()">&larr;</button>
-    <div class="eyebrow">Laghubitta Khabar</div>
-    <h1>Job Career Sathi</h1>
-    <div class="np">जागिर करियर साथी</div>
-    <p>Free CV, cover letter &amp; exam preparation help</p>
+<!-- ==================== APP ==================== -->
+<div id="app" style="display:none">
+  <div class="sidebar">
+    <div class="brand"><div class="bl">LK</div><div><b>Admin Studio</b><span>LAGHUBITTA KHABAR</span></div></div>
+    <button class="nav-item on" id="nav-dash" onclick="nav('dash')">&#128202; <span class="txt">Dashboard</span></button>
+    <button class="nav-item" id="nav-records" onclick="nav('records')">&#128196; <span class="txt">Records</span></button>
+    <button class="nav-item" id="nav-import" onclick="nav('import')">&#128228; <span class="txt">Bulk Import</span></button>
+    <button class="nav-item" id="nav-settings" onclick="nav('settings')">&#9881; <span class="txt">Settings</span></button>
+    <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px"></div>
+    <button class="nav-item locked" title="Step 2"><span class="txt">&#129302; Confessions Queue</span><span class="tag">Step 2</span></button>
+    <button class="nav-item locked" title="Step 3"><span class="txt">&#9997; Content Studio</span><span class="tag">Step 3</span></button>
+    <button class="nav-item locked" title="Step 4"><span class="txt">&#127760; Platform Redesign</span><span class="tag">Step 4</span></button>
+    <div class="foot">Laghubitta Khabar<br>SENNA Network Initiative</div>
   </div>
-  <div class="sec">
-    <div class="note">लघुवित्त, बैंक वा वित्तीय क्षेत्रमा जागिर खोज्दै हुनुहुन्छ? आवेदन दिनुहोस् — हामी तपाईंको प्रोफेसनल CV, आवेदन पत्र र परीक्षा तयारीमा नि:शुल्क मार्गदर्शन गरिदिनेछौं। सुरुमा कुनै शुल्क लाग्दैन।</div>
-    <form id="jobForm">
-      <div class="card">
-        <h2><span class="hicon" style="background:#e8f4ec;color:var(--ok)">&#128100;</span> Personal Details</h2>
-        <label>Full Name <span class="np">पूरा नाम</span> <span class="req">*</span></label>
-        <input type="text" id="jName" required placeholder="e.g. Ramesh Adhikari">
-        <label>Mobile Number <span class="np">मोबाइल नम्बर</span> <span class="req">*</span></label>
-        <input type="tel" id="jMobile" required placeholder="98XXXXXXXX">
-        <label>Email <span class="np">इमेल</span></label>
-        <input type="email" id="jEmail" placeholder="optional">
-        <label>Academic Qualification <span class="np">शैक्षिक योग्यता</span> <span class="req">*</span></label>
-        <select id="jAcademic" required>
-          <option value="">-- Select --</option>
-          <option value="SLC/SEE">SLC / SEE</option>
-          <option value="+2 / Intermediate">+2 / Intermediate</option>
-          <option value="Bachelor">Bachelor (स्नातक)</option>
-          <option value="Master">Master (स्नातकोत्तर)</option>
-          <option value="Other">Other</option>
-        </select>
-        <label>Experience <span class="np">अनुभव</span> <span class="req">*</span></label>
-        <select id="jExp" required>
-          <option value="">-- Select --</option>
-          <option value="Fresher (0-1 yr)">Fresher (0-1 yr)</option>
-          <option value="1-2 years">1-2 years</option>
-          <option value="3-5 years">3-5 years</option>
-          <option value="5+ years">5+ years</option>
-        </select>
-        <label>Current Status <span class="np">हालको अवस्था</span> <span class="req">*</span></label>
-        <select id="jStatus" required>
-          <option value="">-- Select --</option>
-          <option value="Employed">Employed (रोजगार)</option>
-          <option value="Unemployed / Searching">Unemployed / Searching (बेरोजगार / खोज्दै)</option>
-          <option value="Student">Student (विद्यार्थी)</option>
-        </select>
-        <label>Home District <span class="np">गृह जिल्ला</span></label>
-        <input type="text" id="jDistrict" placeholder="e.g. Kathmandu">
-      </div>
-      <div class="card">
-        <h2><span class="hicon" style="background:var(--gold-light);color:var(--gold)">&#128188;</span> Job Interest</h2>
-        <label>Desired Sector <span class="np">इच्छित क्षेत्र</span> <span class="req">*</span></label>
-        <div class="rg">
-          <label><input type="radio" name="sector" value="Microfinance (MFI)"> Microfinance (लघुवित्त)</label>
-          <label><input type="radio" name="sector" value="Bank"> Bank (बैंक)</label>
-          <label><input type="radio" name="sector" value="Cooperative"> Cooperative (सहकारी)</label>
-          <label><input type="radio" name="sector" value="Insurance"> Insurance (बीमा)</label>
-          <label><input type="radio" name="sector" value="Other"> Other</label>
-        </div>
-        <label>Preferred Work Location (Province) <span class="np">काम गर्न रुचाउने प्रदेश</span> <span class="req">*</span></label>
-        <select id="jProvince" required>
-          <option value="">-- Select --</option>
-          <option value="Anywhere in Nepal">Anywhere in Nepal (जुनसुकै)</option>
-          <option value="Kathmandu Valley">Kathmandu Valley (काठमाडौं उपत्यका)</option>
-          <option value="Koshi (Province 1)">Koshi / Province 1 (कोशी)</option>
-          <option value="Madhesh">Madhesh (मधेश)</option>
-          <option value="Bagmati">Bagmati (बागमती)</option>
-          <option value="Gandaki">Gandaki (गण्डकी)</option>
-          <option value="Lumbini">Lumbini (लुम्बिनी)</option>
-          <option value="Karnali">Karnali (कर्णाली)</option>
-          <option value="Sudurpashchim">Sudurpashchim (सुदूरपश्चिम)</option>
-        </select>
-        <label>Preferred District / City <span class="np">रुचाइएको जिल्ला / शहर</span></label>
-        <input type="text" id="jCity" placeholder="e.g. Biratnagar (optional)">
-        <label>Help Needed (select all that apply) <span class="np">चाहिएको सहयोग (सबै छान्नुहोस्)</span> <span class="req">*</span></label>
-        <div class="rg">
-          <label><input type="checkbox" name="help" value="Professional CV & Cover Letter"> Professional CV &amp; Cover Letter</label>
-          <label><input type="checkbox" name="help" value="Exam Prep Guide & Materials"> Exam Prep Guide &amp; Materials</label>
-          <label><input type="checkbox" name="help" value="Interview Preparation"> Interview Preparation</label>
-          <label><input type="checkbox" name="help" value="Reference / Networking"> Reference / Networking</label>
-          <label><input type="checkbox" name="help" value="All of the above"> All of the above</label>
-        </div>
-      </div>
-      <div class="card">
-        <h2><span class="hicon" style="background:#e8eef6;color:var(--navy-2)">&#9998;</span> Additional</h2>
-        <label>Any notes for us? <span class="np">थप टिप्पणी</span></label>
-        <textarea id="jNotes" placeholder="Tell us about your experience, target position, etc."></textarea>
-      </div>
-      <button type="submit" class="submit-btn" id="jSubmit">Submit Application / आवेदन पेश गर्नुहोस्</button>
-      <div class="msg" id="jMsg"></div>
-    </form>
-    <div class="success-screen" id="jSuccess" style="display:none">
-      <div class="check">&#10003;</div>
-      <h2>Application Received</h2>
-      <div class="np">आवेदन प्राप्त भयो</div>
-      <p>We'll contact you for CV/application preparation.</p>
-      <button class="submit-btn" id="jAgain" style="max-width:280px;margin:16px auto 0">Submit Another / अर्को</button>
-    </div>
-    <div class="footer-note">Laghubitta Khabar &middot; A SENNA Network Initiative<br>लघुवित्त खबर &middot; SENNA नेटवर्क</div>
-  </div>
-</div>
 
-<!-- ==================== CLIENT HELP ==================== -->
-<div class="portal" id="portal-help">
-  <div class="topbar">
-    <button class="back" onclick="goHome()">&larr;</button>
-    <div class="eyebrow">Laghubitta Khabar</div>
-    <h1>Client Help Model</h1>
-    <div class="np">ग्राहक सहायता</div>
-    <p>Grievance &amp; support for MFI / cooperative clients</p>
-  </div>
-  <div class="sec">
-    <div class="note">लघुवित्त वा सहकारीबाट अनावश्यक टर्चर, गैरकानुनी व्याजदर असुली वा गलत CIB ब्ल्याकलिस्टिङ भोग्नुभएको छ? विवरण बुझाउनुहोस् — हामी तपाईंको उजुरी पत्र ड्राफ्ट गरिदिनेछौं।</div>
-    <form id="helpForm">
-      <div class="card">
-        <h2><span class="hicon" style="background:#fbeceb;color:var(--err)">&#128100;</span> Your Details</h2>
-        <label>Name <span class="np">नाम</span></label>
-        <input type="text" id="hName" placeholder="Optional">
-        <label>Mobile Number <span class="np">मोबाइल नम्बर</span> <span class="req">*</span></label>
-        <input type="tel" id="hMobile" required placeholder="98XXXXXXXX">
-        <label>Home District <span class="np">गृह जिल्ला</span></label>
-        <input type="text" id="hDistrict" placeholder="e.g. Rupandehi">
-        <label>Institution Name <span class="np">संस्थाको नाम</span> <span class="req">*</span></label>
-        <input type="text" id="hInstitution" required placeholder="e.g. ABC Laghubitta Bittiya Sanstha">
-        <label>Institution Type <span class="np">संस्थाको प्रकार</span> <span class="req">*</span></label>
-        <div class="rg">
-          <label><input type="radio" name="itype" value="Microfinance (MFI)"> Microfinance (लघुवित्त)</label>
-          <label><input type="radio" name="itype" value="Cooperative"> Cooperative (सहकारी)</label>
-          <label><input type="radio" name="itype" value="Bank"> Bank (बैंक)</label>
-          <label><input type="radio" name="itype" value="Other"> Other</label>
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div class="page on" id="page-dash">
+      <h1>Dashboard</h1>
+      <p class="sub">Live record counts from your Google Sheet database</p>
+      <div class="stats" id="statCards"></div>
+      <div class="card" style="margin-top:18px">
+        <h2>How to use the Studio</h2>
+        <div style="font-size:13px;color:#555;line-height:1.9">
+          <b>Records</b> — view the latest submissions per form, export CSV.<br>
+          <b>Bulk Import</b> — paste SENNA members as CSV (ideal for your 1.12 lakh list, ~5,000 rows per batch).<br>
+          <b>Settings</b> — save keys for upcoming steps (Blogger, Facebook, Gemini).<br>
+          <b>Coming next:</b> Confessions review queue (Step 2), Content Studio (Step 3), Platform redesign (Step 4).
         </div>
       </div>
-      <div class="card">
-        <h2><span class="hicon" style="background:var(--gold-light);color:var(--gold)">&#9888;</span> Issue Details</h2>
-        <label>Issue Type <span class="np">समस्या प्रकार</span> <span class="req">*</span></label>
-        <div class="rg">
-          <label><input type="radio" name="iissue" value="Harassment / Torture by staff"> Harassment / Torture</label>
-          <label><input type="radio" name="iissue" value="Illegal interest collection"> Illegal interest collection</label>
-          <label><input type="radio" name="iissue" value="Wrong CIB blacklisting"> Wrong CIB blacklisting</label>
-          <label><input type="radio" name="iissue" value="Loan / repayment dispute"> Loan / repayment dispute</label>
-          <label><input type="radio" name="iissue" value="Savings / deposit issue"> Savings / deposit issue</label>
-          <label><input type="radio" name="iissue" value="Other"> Other</label>
-        </div>
-        <label>Describe Your Issue <span class="np">समस्या विवरण</span> <span class="req">*</span></label>
-        <textarea id="hIssue" required placeholder="Please describe your issue in detail (कृपया विस्तृतमा लेख्नुहोस्)..."></textarea>
-        <label>Preferred Contact Time <span class="np">सम्पर्क गर्ने समय</span></label>
-        <input type="text" id="hContact" placeholder="e.g. 10 AM - 6 PM">
-        <label>Preferred Contact Method <span class="np">सम्पर्क गर्ने माध्यम</span></label>
-        <div class="rg">
-          <label><input type="radio" name="hmethod" value="Phone call"> Phone call (फोन)</label>
-          <label><input type="radio" name="hmethod" value="SMS"> SMS (एसएमएस)</label>
-          <label><input type="radio" name="hmethod" value="WhatsApp / Viber"> WhatsApp / Viber</label>
-          <label><input type="radio" name="hmethod" value="Messenger"> Messenger (मेसेन्जर)</label>
-          <label><input type="radio" name="hmethod" value="Email"> Email (इमेल)</label>
-        </div>
-      </div>
-      <button type="submit" class="submit-btn" id="hSubmit">Submit Grievance / उजुरी पेश गर्नुहोस्</button>
-      <div class="msg" id="hMsg"></div>
-    </form>
-    <div class="success-screen" id="hSuccess" style="display:none">
-      <div class="check">&#10003;</div>
-      <h2>Grievance Received</h2>
-      <div class="np">उजुरी प्राप्त भयो</div>
-      <p>Our team will draft a complaint letter and contact you.</p>
-      <button class="submit-btn" id="hAgain" style="max-width:280px;margin:16px auto 0">Submit Another / अर्को</button>
     </div>
-    <div class="footer-note">Laghubitta Khabar &middot; A SENNA Network Initiative<br>लघुवित्त खबर &middot; SENNA नेटवर्क</div>
-  </div>
-</div>
 
-<!-- ==================== SENNA NETWORK ==================== -->
-<div class="portal" id="portal-senna">
-  <div class="topbar">
-    <button class="back" onclick="goHome()">&larr;</button>
-    <div class="eyebrow">Laghubitta Khabar</div>
-    <h1>SENNA Network</h1>
-    <div class="np">सेन्ना नेटवर्क</div>
-    <p>Join the genuine people's network</p>
-  </div>
-  <div class="sec">
-    <div class="note">SENNA नेटवर्क एक स्वतन्त्र जनकल्याणकारी पहल हो। हामी वित्तीय उपभोक्ता, कर्मचारी र जागिर खोज्नेहरूलाई जोड्दछौं। साँचो (genuine) व्यक्तिहरूसँग मात्र नेटवर्क विस्तार गर्दछौं।</div>
-    <form id="sennaForm">
-      <div class="card">
-        <h2><span class="hicon" style="background:var(--gold-light);color:var(--gold)">&#128101;</span> Membership Details</h2>
-        <label>Full Name <span class="np">पूरा नाम</span> <span class="req">*</span></label>
-        <input type="text" id="sName" required placeholder="e.g. Sita Gurung">
-        <label>Mobile Number <span class="np">मोबाइल नम्बर</span> <span class="req">*</span></label>
-        <input type="tel" id="sMobile" required placeholder="98XXXXXXXX">
-        <label>Email <span class="np">इमेल</span></label>
-        <input type="email" id="sEmail" placeholder="optional">
-        <label>District <span class="np">जिल्ला</span> <span class="req">*</span></label>
-        <input type="text" id="sDistrict" required placeholder="e.g. Lalitpur">
-        <label>Category <span class="np">श्रेणी</span> <span class="req">*</span></label>
-        <div class="rg">
-          <label><input type="radio" name="scat" value="Microfinance" checked> Microfinance (लघुवित्त)</label>
-          <label><input type="radio" name="scat" value="Bank"> Bank (बैंक)</label>
-          <label><input type="radio" name="scat" value="Cooperative"> Cooperative (सहकारी)</label>
-          <label><input type="radio" name="scat" value="Insurance"> Insurance (बीमा)</label>
-          <label><input type="radio" name="scat" value="Client / Borrower"> Client / Borrower (ग्राहक)</label>
-          <label><input type="radio" name="scat" value="Job Seeker"> Job Seeker (जागिर खोज्दै)</label>
-          <label><input type="radio" name="scat" value="Student"> Student (विद्यार्थी)</label>
-          <label><input type="radio" name="scat" value="Other"> Other (अन्य)</label>
-        </div>
-        <label>Institution / Company <span class="np">संस्था / कम्पनी</span></label>
-        <input type="text" id="sInstitution" placeholder="e.g. Infinity Laghubitta Bittiya Sanstha">
+    <!-- RECORDS -->
+    <div class="page" id="page-records">
+      <h1>Records</h1>
+      <p class="sub">Latest submissions per form (newest first, up to 500 shown)</p>
+      <div class="pills" id="pills"></div>
+      <div class="tools">
+        <button class="btn-ghost" onclick="refreshRecords()">&#8635; Refresh</button>
+        <button class="btn-ghost" onclick="exportCSV()">&#11015; Export CSV (all rows)</button>
       </div>
-      <div class="card">
-        <h2><span class="hicon" style="background:#e8eef6;color:var(--navy-2)">&#128188;</span> Your Role</h2>
-        <label>Profession / Role <span class="np">पेशा / भूमिका</span> <span class="req">*</span></label>
-        <div class="rg">
-          <label><input type="radio" name="prof" value="MFI Employee"> MFI Employee</label>
-          <label><input type="radio" name="prof" value="Cooperative Staff"> Cooperative Staff</label>
-          <label><input type="radio" name="prof" value="Bank Employee"> Bank Employee</label>
-          <label><input type="radio" name="prof" value="Borrower / Client"> Borrower / Client</label>
-          <label><input type="radio" name="prof" value="Job Seeker"> Job Seeker</label>
-          <label><input type="radio" name="prof" value="Agent / Volunteer"> Agent / Volunteer</label>
-          <label><input type="radio" name="prof" value="Student"> Student</label>
-          <label><input type="radio" name="prof" value="Other"> Other</label>
-        </div>
-        <label>How would you like to contribute? (select all that apply) <span class="np">कसरी योगदान गर्न चाहनुहुन्छ? (सबै छान्नुहोस्)</span> <span class="req">*</span></label>
-        <div class="rg">
-          <label><input type="checkbox" name="contrib" value="Share experiences / insights"> Share experiences / insights</label>
-          <label><input type="checkbox" name="contrib" value="Help draft grievance letters"> Help draft grievance letters</label>
-          <label><input type="checkbox" name="contrib" value="Refer job opportunities"> Refer job opportunities</label>
-          <label><input type="checkbox" name="contrib" value="Community support"> Community support</label>
-          <label><input type="checkbox" name="contrib" value="Volunteer"> Volunteer</label>
-          <label><input type="checkbox" name="contrib" value="Other"> Other</label>
-        </div>
-      </div>
-      <div class="card">
-        <h2><span class="hicon" style="background:#e8f4ec;color:var(--ok)">&#128172;</span> Why Join?</h2>
-        <label>Why do you want to join SENNA Network? <span class="np">किन जोडिन चाहनुहुन्छ?</span></label>
-        <textarea id="sReason" placeholder="Briefly share your reason (छोटकरीमा लेख्नुहोस्)..."></textarea>
-        <label class="ck"><input type="checkbox" id="sConsent" required> I agree to share my details with the SENNA network for community support. <span class="np">म मेरो विवरण SENNA नेटवर्कसँग साझा गर्न सहमत छु।</span> <span class="req">*</span></label>
-      </div>
-      <button type="submit" class="submit-btn" id="sSubmit">Join the Network / सदस्य बन्नुहोस्</button>
-      <div class="msg" id="sMsg"></div>
-    </form>
-    <div class="success-screen" id="sSuccess" style="display:none">
-      <div class="check">&#10003;</div>
-      <h2>Welcome to SENNA Network!</h2>
-      <div class="np">सेन्ना नेटवर्कमा स्वागत छ</div>
-      <p>Your membership request has been recorded.</p>
-      <button class="submit-btn" id="sAgain" style="max-width:280px;margin:16px auto 0">Submit Another / अर्को</button>
+      <div class="table-wrap" id="tableWrap"><div class="empty">Loading...</div></div>
+      <div class="count-note" id="countNote"></div>
     </div>
-    <div class="footer-note">Laghubitta Khabar &middot; A SENNA Network Initiative<br>लघुवित्त खबर &middot; SENNA नेटवर्क</div>
-  </div>
-</div>
 
-<!-- ==================== CONFESSION ==================== -->
-<div class="portal" id="portal-conf">
-  <div class="topbar">
-    <button class="back" onclick="goHome()">&larr;</button>
-    <div class="eyebrow">Laghubitta Khabar</div>
-    <h1>Confession</h1>
-    <div class="np">गोप्य भनाइ</div>
-    <p>Share anonymously — no name, no judgment</p>
-  </div>
-  <div class="sec">
-    <div class="note">MFI, बैंक वा सहकारी क्षेत्रमा काम गर्ने वा ग्राहक रहनुभएका व्यक्तिहरूको मनको कुरा। नाम, मोबाइल वा कुनै पहिचान विवरण अनिवार्य छैन। तपाईंको भनाइ गोप्य रहन्छ र अनुमति बिना कहीँ प्रकाशित गरिँदैन।</div>
-    <form id="confForm">
+    <!-- IMPORT -->
+    <div class="page" id="page-import">
+      <h1>Bulk Import — SENNA Members</h1>
+      <p class="sub">Load large member lists straight into the database</p>
       <div class="card">
-        <h2><span class="hicon" style="background:#f3ecfa;color:#6a3fa0">&#127917;</span> Your Confession</h2>
-        <label>Category <span class="np">श्रेणी</span> <span class="req">*</span></label>
-        <div class="rg">
-          <label><input type="radio" name="ccat" value="MFI staff experience"> MFI staff experience</label>
-          <label><input type="radio" name="ccat" value="Cooperative / Bank staff"> Cooperative / Bank staff</label>
-          <label><input type="radio" name="ccat" value="Client / borrower story"> Client / borrower story</label>
-          <label><input type="radio" name="ccat" value="Job hunting journey"> Job hunting journey</label>
-          <label><input type="radio" name="ccat" value="Whistleblowing"> Whistleblowing</label>
-          <label><input type="radio" name="ccat" value="Personal / other"> Personal / other</label>
+        <div class="hint">
+          Paste CSV rows for the <b>SennaNetwork</b> sheet. Column order (header row optional):<br>
+          <b>Full Name, Mobile, Email, Home District, Category, Institution, Profession, Contribution, Reason, Consent</b><br>
+          Blank <b>Category</b> becomes <b>Microfinance</b>. Recommended: ~5,000 rows per batch.
         </div>
-        <label>Write your confession <span class="np">तपाईंको गोप्य भनाइ</span> <span class="req">*</span></label>
-        <textarea id="cText" required minlength="10" placeholder="तपाईंको मनको कुरा यहाँ लेख्नुहोस्... (अनाममा रहनेछ)"></textarea>
-        <label>Optional identifier <span class="np">वैकल्पिक पहिचान</span></label>
-        <input type="text" id="cName" placeholder="A nickname like 'Field Staff 7' (leave blank for anonymous)">
-        <label>District <span class="np">जिल्ला</span> <span class="np">(वैकल्पिक)</span></label>
-        <input type="text" id="cDistrict" placeholder="e.g. Banke (optional)">
-      </div>
-      <button type="submit" class="submit-btn" id="cSubmit">Submit Confession / पेश गर्नुहोस्</button>
-      <div class="msg" id="cMsg"></div>
-    </form>
-    <div class="success-screen" id="cSuccess" style="display:none">
-      <div class="check">&#10003;</div>
-      <h2>Thank You for Sharing</h2>
-      <div class="np">साझा गर्नुभएकोमा धन्यवाद</div>
-      <p>Your confession has been recorded anonymously.</p>
-      <button class="submit-btn" id="cAgain" style="max-width:280px;margin:16px auto 0">Submit Another / अर्को</button>
-    </div>
-    <div class="footer-note">Laghubitta Khabar &middot; A SENNA Network Initiative<br>लघुवित्त खबर &middot; SENNA नेटवर्क</div>
-  </div>
-</div>
-
-<!-- ==================== ADMIN DASHBOARD ==================== -->
-<div class="portal" id="portal-admin">
-  <div class="topbar">
-    <button class="back" onclick="goHome()">&larr;</button>
-    <div class="eyebrow">Laghubitta Khabar</div>
-    <h1>Admin Dashboard</h1>
-    <div class="np">व्यवस्थापक प्यानल</div>
-    <p>Protected records viewer &amp; bulk import</p>
-  </div>
-  <div class="sec">
-    <div id="adLogin">
-      <div class="card">
-        <h2><span class="hicon" style="background:#e8eef6;color:var(--navy-2)">&#128274;</span> Admin Login</h2>
-        <label>Admin Password <span class="np">व्यवस्थापक पासवर्ड</span> <span class="req">*</span></label>
-        <input type="password" id="adPass" placeholder="Enter admin password">
-        <button class="submit-btn" id="adLoginBtn" onclick="adminLogin()">Login / लगइन</button>
-        <div class="msg" id="adMsg"></div>
-      </div>
-    </div>
-    <div id="adDash" style="display:none">
-      <div class="ad-stats" id="adStats"></div>
-      <div class="card">
-        <h2><span class="hicon" style="background:var(--gold-light);color:var(--gold)">&#128196;</span> Records <span class="np">विवरणहरू</span></h2>
-        <div class="ad-tabs" id="adTabs"></div>
-        <div class="ad-actions">
-          <button class="btn2" id="adExportBtn" onclick="exportCSV()">Export CSV</button>
-          <button class="btn2" onclick="logoutAdmin()">Logout</button>
-        </div>
-        <div class="ad-wrap" id="adTable"></div>
-      </div>
-      <div class="card">
-        <h2><span class="hicon" style="background:#e8f4ec;color:var(--ok)">&#128228;</span> Bulk Import SENNA Members (CSV)</h2>
-        <div class="note">Paste CSV rows for the <b>SennaNetwork</b> sheet. Column order (header row optional): Full Name, Mobile, Email, Home District, Category, Institution, Profession, Contribution, Reason, Consent. Blank Category becomes <b>Microfinance</b>. Ideal for uploading large member lists (e.g. Infinity's 1.12 lakh members) in batches.</div>
         <label>CSV Rows</label>
-        <textarea id="adImport" style="min-height:150px" placeholder="Sita Gurung,98XXXXXXXX,,Kathmandu,Microfinance,Infinity Laghubitta,MFI Employee,Community support,,Yes&#10;Ramesh Adhikari,97XXXXXXXX,,Lalitpur,Microfinance,Infinity Laghubitta,Agent,Volunteer,,Yes"></textarea>
-        <button class="submit-btn" id="adImportBtn" onclick="importSenna()">Import Rows</button>
-        <div class="msg" id="adImportMsg"></div>
+        <textarea id="importText" placeholder="Sita Gurung,98XXXXXXXX,,Kathmandu,Microfinance,Infinity Laghubitta,MFI Employee,Community support,,Yes&#10;Ramesh Adhikari,97XXXXXXXX,,Lalitpur,Microfinance,Infinity Laghubitta,Agent,Volunteer,,Yes"></textarea>
+        <button class="btn" id="importBtn" style="margin-top:14px" onclick="doImport()">Import Rows</button>
+        <div class="msg" id="importMsg"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <h1>Settings</h1>
+      <p class="sub">Credentials for upcoming automation steps — stored securely in Script Properties</p>
+      <div class="card">
+        <div class="set-row">
+          <div class="lbl">Blogger Blog ID</div>
+          <input type="text" id="sBlogId" placeholder="e.g. 1234567890123456789">
+          <div class="hlp">Step 2 — publishing confessions / articles</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Facebook Page ID</div>
+          <input type="text" id="sFbPageId" placeholder="e.g. 123456789012345">
+          <div class="hlp">Step 2 — posting updates</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Facebook Page Access Token</div>
+          <input type="password" id="sFbToken" placeholder="EAAG... (long-lived, pages_manage_posts)">
+          <div class="hlp">Leave blank to keep the current value</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Gemini API Key</div>
+          <input type="password" id="sGeminiKey" placeholder="AIza...">
+          <div class="hlp">Step 3 — AI content engine. Leave blank to keep the current value</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Google Drive Folder ID (field photos)</div>
+          <input type="text" id="sFolderId" placeholder="Folder ID from Drive URL">
+          <div class="hlp">Step 2 — staff field reports</div>
+        </div>
+        <button class="btn" id="settingsBtn" onclick="saveSettings()">Save Settings</button>
+        <div class="msg" id="settingsMsg"></div>
+      </div>
+      <div class="locked-note">
+        <b>Step-by-step roadmap:</b><br>
+        &#10003; Step 1 — Portal + Admin Studio (done)<br>
+        &#9679; Step 2 — Confessions review &amp; publish queue<br>
+        &#9679; Step 3 — Content Studio (Gemini articles + manual publish)<br>
+        &#9679; Step 4 — Full Laghubitta Khabar platform redesign
       </div>
     </div>
   </div>
 </div>
 
 <script>
-var SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
-
-function openPortal(name){
-  document.getElementById("homePage").classList.add("hidden");
-  document.querySelectorAll(".portal").forEach(function(p){p.classList.remove("active")});
-  document.getElementById("portal-"+name).classList.add("active");
-  window.scrollTo(0,0);
-}
-function goHome(){
-  document.querySelectorAll(".portal").forEach(function(p){p.classList.remove("active")});
-  document.getElementById("homePage").classList.remove("hidden");
-  window.scrollTo(0,0);
-}
-
-function showMsg(id,text,type){
-  var m=document.getElementById(id);
-  m.textContent=text;
-  m.className="msg show "+type;
-}
-function isConfigured(){
-  return SCRIPT_URL && SCRIPT_URL.indexOf("PASTE_YOUR") === -1;
-}
-function postForm(url,payload){
-  return fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
-}
-
-function collectChecked(scope, name){
-  var els = scope.querySelectorAll('input[name="'+name+'"]:checked');
-  var arr = [];
-  els.forEach(function(c){ arr.push(c.value); });
-  return arr.join("; ");
-}
-
-// ---- JOB FORM ----
-document.getElementById("jobForm").addEventListener("submit",function(e){
-  e.preventDefault();
-  var sector=this.querySelector('input[name="sector"]:checked');
-  var help=collectChecked(this,"help");
-  if(!sector){showMsg("jMsg","Please select a desired sector.","err");return;}
-  if(!help){showMsg("jMsg","Please select at least one help option.","err");return;}
-  if(!isConfigured()){showMsg("jMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
-
-  var payload={
-    form:"job",
-    fullName:document.getElementById("jName").value.trim(),
-    mobile:document.getElementById("jMobile").value.trim(),
-    email:document.getElementById("jEmail").value.trim(),
-    academic:document.getElementById("jAcademic").value,
-    experience:document.getElementById("jExp").value,
-    status:document.getElementById("jStatus").value,
-    district:document.getElementById("jDistrict").value.trim(),
-    province:document.getElementById("jProvince").value,
-    city:document.getElementById("jCity").value.trim(),
-    sector:sector.value,
-    helpNeeded:help,
-    notes:document.getElementById("jNotes").value.trim(),
-    timestamp:new Date().toISOString()
-  };
-
-  var btn=document.getElementById("jSubmit");
-  btn.disabled=true;btn.textContent="Submitting / पेश गर्दै...";
-  postForm(SCRIPT_URL,payload)
-  .then(function(){
-    document.getElementById("jobForm").style.display="none";
-    document.getElementById("jSuccess").style.display="block";
-  }).catch(function(){
-    showMsg("jMsg","Network error. Please try again.","err");
-  }).finally(function(){
-    btn.disabled=false;btn.textContent="Submit Application / आवेदन पेश गर्नुहोस्";
-  });
-});
-document.getElementById("jAgain").addEventListener("click",function(){
-  document.getElementById("jobForm").reset();
-  document.getElementById("jSuccess").style.display="none";
-  document.getElementById("jobForm").style.display="block";
-  document.getElementById("jMsg").className="msg";
-});
-
-// ---- HELP FORM ----
-document.getElementById("helpForm").addEventListener("submit",function(e){
-  e.preventDefault();
-  var itype=this.querySelector('input[name="itype"]:checked');
-  var iissue=this.querySelector('input[name="iissue"]:checked');
-  var hmethod=this.querySelector('input[name="hmethod"]:checked');
-  if(!itype){showMsg("hMsg","Please select institution type.","err");return;}
-  if(!iissue){showMsg("hMsg","Please select issue type.","err");return;}
-  if(!isConfigured()){showMsg("hMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
-
-  var payload={
-    form:"help",
-    name:document.getElementById("hName").value.trim(),
-    mobile:document.getElementById("hMobile").value.trim(),
-    district:document.getElementById("hDistrict").value.trim(),
-    institution:document.getElementById("hInstitution").value.trim(),
-    institutionType:itype.value,
-    issueType:iissue.value,
-    issue:document.getElementById("hIssue").value.trim(),
-    contactTime:document.getElementById("hContact").value.trim(),
-    contactMethod:hmethod ? hmethod.value : "",
-    timestamp:new Date().toISOString()
-  };
-
-  var btn=document.getElementById("hSubmit");
-  btn.disabled=true;btn.textContent="Submitting / पेश गर्दै...";
-  postForm(SCRIPT_URL,payload)
-  .then(function(){
-    document.getElementById("helpForm").style.display="none";
-    document.getElementById("hSuccess").style.display="block";
-  }).catch(function(){
-    showMsg("hMsg","Network error. Please try again.","err");
-  }).finally(function(){
-    btn.disabled=false;btn.textContent="Submit Grievance / उजुरी पेश गर्नुहोस्";
-  });
-});
-document.getElementById("hAgain").addEventListener("click",function(){
-  document.getElementById("helpForm").reset();
-  document.getElementById("hSuccess").style.display="none";
-  document.getElementById("helpForm").style.display="block";
-  document.getElementById("hMsg").className="msg";
-});
-
-// ---- SENNA FORM ----
-document.getElementById("sennaForm").addEventListener("submit",function(e){
-  e.preventDefault();
-  var prof=this.querySelector('input[name="prof"]:checked');
-  var scat=this.querySelector('input[name="scat"]:checked');
-  var contrib=collectChecked(this,"contrib");
-  if(!prof){showMsg("sMsg","Please select your profession/role.","err");return;}
-  if(!scat){showMsg("sMsg","Please select a category.","err");return;}
-  if(!contrib){showMsg("sMsg","Please select at least one contribution option.","err");return;}
-  if(!isConfigured()){showMsg("sMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
-
-  var payload={
-    form:"senna",
-    fullName:document.getElementById("sName").value.trim(),
-    mobile:document.getElementById("sMobile").value.trim(),
-    email:document.getElementById("sEmail").value.trim(),
-    district:document.getElementById("sDistrict").value.trim(),
-    category:scat.value,
-    institution:document.getElementById("sInstitution").value.trim(),
-    profession:prof.value,
-    contribution:contrib,
-    reason:document.getElementById("sReason").value.trim(),
-    consent:document.getElementById("sConsent").checked ? "Yes" : "No",
-    timestamp:new Date().toISOString()
-  };
-
-  var btn=document.getElementById("sSubmit");
-  btn.disabled=true;btn.textContent="Submitting / पेश गर्दै...";
-  postForm(SCRIPT_URL,payload)
-  .then(function(){
-    document.getElementById("sennaForm").style.display="none";
-    document.getElementById("sSuccess").style.display="block";
-  }).catch(function(){
-    showMsg("sMsg","Network error. Please try again.","err");
-  }).finally(function(){
-    btn.disabled=false;btn.textContent="Join the Network / सदस्य बन्नुहोस्";
-  });
-});
-document.getElementById("sAgain").addEventListener("click",function(){
-  document.getElementById("sennaForm").reset();
-  document.getElementById("sSuccess").style.display="none";
-  document.getElementById("sennaForm").style.display="block";
-  document.getElementById("sMsg").className="msg";
-});
-
-// ---- CONFESSION FORM ----
-document.getElementById("confForm").addEventListener("submit",function(e){
-  e.preventDefault();
-  var ccat=this.querySelector('input[name="ccat"]:checked');
-  if(!ccat){showMsg("cMsg","Please select a category.","err");return;}
-  if(!isConfigured()){showMsg("cMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
-
-  var payload={
-    form:"confession",
-    category:ccat.value,
-    text:document.getElementById("cText").value.trim(),
-    nickname:document.getElementById("cName").value.trim(),
-    district:document.getElementById("cDistrict").value.trim(),
-    timestamp:new Date().toISOString()
-  };
-
-  var btn=document.getElementById("cSubmit");
-  btn.disabled=true;btn.textContent="Submitting / पेश गर्दै...";
-  postForm(SCRIPT_URL,payload)
-  .then(function(){
-    document.getElementById("confForm").style.display="none";
-    document.getElementById("cSuccess").style.display="block";
-  }).catch(function(){
-    showMsg("cMsg","Network error. Please try again.","err");
-  }).finally(function(){
-    btn.disabled=false;btn.textContent="Submit Confession / पेश गर्नुहोस्";
-  });
-});
-document.getElementById("cAgain").addEventListener("click",function(){
-  document.getElementById("confForm").reset();
-  document.getElementById("cSuccess").style.display="none";
-  document.getElementById("confForm").style.display="block";
-  document.getElementById("cMsg").className="msg";
-});
-
-// ---- ADMIN DASHBOARD ----
-var AD_FORMS = [
+var FORMS = [
   {key:"job", label:"Job Career Sathi"},
   {key:"help", label:"Client Help"},
   {key:"senna", label:"SENNA Network"},
   {key:"confession", label:"Confession"}
 ];
-var AD_CURRENT = "senna";
-var ADMIN_TOKEN = sessionStorage.getItem("lkAdminToken") || "";
+var CUR = "senna";
+var TOKEN = sessionStorage.getItem("lkStudioToken") || "";
 
-function adminLogin(){
-  var pass=document.getElementById("adPass").value;
-  if(!pass){showMsg("adMsg","Enter the admin password.","err");return;}
-  fetch(SCRIPT_URL+"?action=login&pass="+encodeURIComponent(pass))
-  .then(function(r){return r.json();})
-  .then(function(d){
+function esc(s){
+  return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function showMsg(id,text,type){
+  var m=document.getElementById(id);
+  m.textContent=text; m.className="msg show "+type;
+  if(type==="ok"){ setTimeout(function(){m.className="msg";},6000); }
+}
+function run(fnName,args,onOk,onErr){
+  var r=google.script.run.withSuccessHandler(onOk).withFailureHandler(function(e){
+    if(onErr) onErr(e); else alert("Error: "+(e&&e.message?e.message:e));
+  });
+  if(args&&args.length){ r=r[fnName].apply(r,args); } else { r=r[fnName](); }
+}
+
+/* ---------- LOGIN ---------- */
+function doLogin(){
+  var pass=document.getElementById("pass").value;
+  if(!pass){showMsg("loginMsg","Enter the admin password.","err");return;}
+  document.getElementById("loginBtn").disabled=true;
+  run("studioLogin",[pass],function(d){
     if(d.status==="ok"){
-      ADMIN_TOKEN=d.token;
-      sessionStorage.setItem("lkAdminToken",d.token);
-      showAdminDash();
+      TOKEN=d.token; sessionStorage.setItem("lkStudioToken",d.token);
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("app").style.display="flex";
+      boot();
     } else {
-      showMsg("adMsg",d.message||"Login failed.","err");
+      showMsg("loginMsg",d.message||"Login failed.","err");
     }
-  }).catch(function(){showMsg("adMsg","Network error. Please try again.","err");});
-}
-
-function showAdminDash(){
-  document.getElementById("adLogin").style.display="none";
-  document.getElementById("adDash").style.display="block";
-  renderTabs();
-  loadStats();
-  loadRecords(AD_CURRENT);
-}
-
-function renderTabs(){
-  var box=document.getElementById("adTabs");
-  box.innerHTML="";
-  AD_FORMS.forEach(function(f){
-    var b=document.createElement("button");
-    b.className="ad-tab"+(f.key===AD_CURRENT?" on":"");
-    b.textContent=f.label;
-    b.onclick=function(){AD_CURRENT=f.key;renderTabs();loadRecords(f.key);};
-    box.appendChild(b);
+    document.getElementById("loginBtn").disabled=false;
   });
 }
 
+/* ---------- NAV ---------- */
+function nav(name){
+  document.querySelectorAll(".nav-item").forEach(function(b){b.classList.remove("on");});
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("on");});
+  document.getElementById("nav-"+name).classList.add("on");
+  document.getElementById("page-"+name).classList.add("on");
+  if(name==="dash") loadStats();
+  if(name==="records") loadRecords();
+  if(name==="settings") loadSettings();
+}
+
+function boot(){
+  nav("dash");
+  loadStats();
+  renderPills();
+}
+
+/* ---------- DASHBOARD ---------- */
 function loadStats(){
-  fetch(SCRIPT_URL+"?action=stats&token="+encodeURIComponent(ADMIN_TOKEN))
-  .then(function(r){return r.json();})
-  .then(function(d){
-    var box=document.getElementById("adStats");
-    box.innerHTML="";
-    AD_FORMS.forEach(function(f){
-      var n=(d[f.key]||0).toLocaleString();
-      var s=document.createElement("div");
-      s.className="ad-stat";
-      s.innerHTML="<b>"+n+"</b><span>"+f.label+"</span>";
-      box.appendChild(s);
+  run("studioStats",[TOKEN],function(d){
+    if(d.status!=="ok"){ document.getElementById("statCards").innerHTML='<div class="empty">'+esc(d.message)+"</div>"; return; }
+    var colors={job:"",help:"red",senna:"gold",confession:"purple"};
+    var html="";
+    FORMS.forEach(function(f){
+      html+='<div class="stat '+colors[f.key]+'"><b>'+Number(d.stats[f.key]||0).toLocaleString()+'</b><span>'+esc(f.label)+"</span></div>";
     });
-  }).catch(function(){});
+    document.getElementById("statCards").innerHTML=html;
+  });
 }
 
-function loadRecords(form){
-  var wrap=document.getElementById("adTable");
-  wrap.innerHTML='<div class="ad-empty">Loading...</div>';
-  fetch(SCRIPT_URL+"?action=records&form="+form+"&limit=500&token="+encodeURIComponent(ADMIN_TOKEN))
-  .then(function(r){return r.json();})
-  .then(function(d){
-    if(d.status==="error"){wrap.innerHTML='<div class="ad-empty">'+d.message+"</div>";return;}
+/* ---------- RECORDS ---------- */
+function renderPills(){
+  var box=document.getElementById("pills"); box.innerHTML="";
+  FORMS.forEach(function(f){
+    var b=document.createElement("button");
+    b.className="pill"+(f.key===CUR?" on":""); b.textContent=f.label;
+    b.onclick=function(){CUR=f.key;renderPills();loadRecords();};
+    box.appendChild(b);
+  });
+}
+function loadRecords(){
+  var wrap=document.getElementById("tableWrap");
+  wrap.innerHTML='<div class="empty">Loading...</div>';
+  document.getElementById("countNote").textContent="";
+  run("studioRecords",[TOKEN,CUR,500],function(d){
+    if(d.status!=="ok"){ wrap.innerHTML='<div class="empty">'+esc(d.message)+"</div>"; return; }
     var rows=d.rows||[];
-    if(!rows.length){wrap.innerHTML='<div class="ad-empty">No records yet. Total: '+(d.total||0)+"</div>";return;}
-    var keys=Object.keys(rows[0]);
-    var html="<table class='ad-table'><thead><tr>";
-    keys.forEach(function(k){html+="<th>"+esc(k)+"</th>";});
-    html+="</tr></thead><tbody>";
-    rows.forEach(function(r){
-      html+="<tr>";
-      keys.forEach(function(k){
-        html+="<td>"+esc(String(r[k]==null?"":r[k]))+"</td>";
+    if(!rows.length){ wrap.innerHTML='<div class="empty">No records yet.</div>'; }
+    else {
+      var keys=Object.keys(rows[0]);
+      var html="<table><thead><tr>";
+      keys.forEach(function(k){ html+="<th>"+esc(k)+"</th>"; });
+      html+="</tr></thead><tbody>";
+      rows.forEach(function(r){
+        html+="<tr>";
+        keys.forEach(function(k){ html+="<td>"+esc(r[k])+"</td>"; });
+        html+="</tr>";
       });
-      html+="</tr>";
-    });
-    html+="</tbody></table><div class='ad-empty'>Showing latest "+rows.length+" of "+(d.total||rows.length)+" records</div>";
-    wrap.innerHTML=html;
-  }).catch(function(){wrap.innerHTML='<div class="ad-empty">Network error loading records.</div>';});
+      html+="</tbody></table>";
+      wrap.innerHTML=html;
+    }
+    document.getElementById("countNote").textContent="Showing latest "+rows.length+" of "+(d.total||rows.length)+" records";
+  });
 }
+function refreshRecords(){ loadRecords(); }
 
+/* ---------- EXPORT ---------- */
 function exportCSV(){
-  window.location.href=SCRIPT_URL+"?action=export&form="+AD_CURRENT+"&token="+encodeURIComponent(ADMIN_TOKEN);
+  run("studioExport",[TOKEN,CUR],function(d){
+    if(d.status!=="ok"){ alert(d.message||"Export failed"); return; }
+    var blob=new Blob(["\ufeff"+d.csv],{type:"text/csv;charset=utf-8"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=CUR+"_export.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
 }
 
-function logoutAdmin(){
-  ADMIN_TOKEN="";
-  sessionStorage.removeItem("lkAdminToken");
-  document.getElementById("adPass").value="";
-  document.getElementById("adDash").style.display="none";
-  document.getElementById("adLogin").style.display="block";
-}
-
-function importSenna(){
-  if(!isConfigured()){showMsg("adImportMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
-  var text=document.getElementById("adImport").value.trim();
-  if(!text){showMsg("adImportMsg","Paste some CSV rows first.","err");return;}
+/* ---------- IMPORT ---------- */
+function doImport(){
+  var text=document.getElementById("importText").value.trim();
+  if(!text){showMsg("importMsg","Paste some CSV rows first.","err");return;}
   var lines=text.split(/\r?\n/).filter(function(l){return l.trim().length>0;});
   var rows=[];
   lines.forEach(function(line){
@@ -793,24 +333,55 @@ function importSenna(){
     if(!r[4]) r[4]="Microfinance";
     rows.push(r);
   });
-  if(!rows.length){showMsg("adImportMsg","No valid rows found.","err");return;}
-  var btn=document.getElementById("adImportBtn");
-  btn.disabled=true;btn.textContent="Importing "+rows.length+" rows...";
-  postForm(SCRIPT_URL,{action:"import",form:"senna",token:ADMIN_TOKEN,rows:rows})
-  .then(function(){
-    showMsg("adImportMsg","Import request sent for "+rows.length+" rows. Refresh records shortly.","ok");
-  }).catch(function(){
-    showMsg("adImportMsg","Network error during import.","err");
-  }).finally(function(){
-    btn.disabled=false;btn.textContent="Import Rows";
+  if(!rows.length){showMsg("importMsg","No valid rows found.","err");return;}
+  var btn=document.getElementById("importBtn");
+  btn.disabled=true; btn.textContent="Importing "+rows.length+" rows...";
+  run("studioImport",[TOKEN,"senna",rows],function(d){
+    showMsg("importMsg",d.status==="ok" ? "Imported "+d.inserted+" rows successfully." : (d.message||"Import failed."), d.status==="ok"?"ok":"err");
+    btn.disabled=false; btn.textContent="Import Rows";
+    if(d.status==="ok"){ document.getElementById("importText").value=""; loadStats(); }
+  },function(){
+    btn.disabled=false; btn.textContent="Import Rows";
   });
 }
 
-function esc(s){
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+/* ---------- SETTINGS ---------- */
+function loadSettings(){
+  run("studioGetSettings",[TOKEN],function(d){
+    if(d.status!=="ok") return;
+    var s=d.settings||{};
+    document.getElementById("sBlogId").value=s.blogId||"";
+    document.getElementById("sFbPageId").value=s.fbPageId||"";
+    document.getElementById("sFbToken").value=s.fbToken||"";
+    document.getElementById("sGeminiKey").value=s.geminiKey||"";
+    document.getElementById("sFolderId").value=s.folderId||"";
+  });
+}
+function saveSettings(){
+  var s={
+    blogId:document.getElementById("sBlogId").value,
+    fbPageId:document.getElementById("sFbPageId").value,
+    fbToken:document.getElementById("sFbToken").value,
+    geminiKey:document.getElementById("sGeminiKey").value,
+    folderId:document.getElementById("sFolderId").value
+  };
+  var btn=document.getElementById("settingsBtn");
+  btn.disabled=true;
+  run("studioSaveSettings",[TOKEN,s],function(d){
+    showMsg("settingsMsg",d.status==="ok"?(d.message||"Saved."):(d.message||"Failed."),d.status==="ok"?"ok":"err");
+    btn.disabled=false;
+    if(d.status==="ok"){ setTimeout(loadSettings,600); }
+  },function(){ btn.disabled=false; });
 }
 
-if(ADMIN_TOKEN){showAdminDash();}
+/* ---------- BOOT ---------- */
+window.addEventListener("load",function(){
+  if(TOKEN){
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("app").style.display="flex";
+    boot();
+  }
+});
 </script>
 </body>
 </html>

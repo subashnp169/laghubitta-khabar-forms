@@ -63,7 +63,11 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.TEXT);
   }
 
-  return ContentService.createTextOutput("Laghubitta Khabar Forms API is live.");
+  // No recognized API action -> serve the Admin Studio UI (HtmlService)
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('Laghubitta Khabar — Admin Studio')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
 function submitRow_(form, data) {
@@ -107,14 +111,19 @@ function importRows_(data) {
   if (!cfg) return error_("Unknown form");
   if (!data.rows || !data.rows.length) return json_({ status: "ok", inserted: 0 });
 
+  const inserted = appendRows_(cfg, data.rows);
+  return json_({ status: "ok", inserted: inserted, form: data.form });
+}
+
+function appendRows_(cfg, rows) {
   const sheet = getOrCreateSheet_(cfg.name, cfg.headers);
   const timestamp = new Date();
-  const values = data.rows.map(function (r) {
+  const values = rows.map(function (r) {
     return [timestamp].concat(r);
   });
   const start = sheet.getLastRow() + 1;
   sheet.getRange(start, 1, values.length, values[0].length).setValues(values);
-  return json_({ status: "ok", inserted: values.length, form: data.form });
+  return values.length;
 }
 
 function getStats_() {
@@ -210,6 +219,74 @@ function setAdminPasswordUi() {
     PropertiesService.getScriptProperties().setProperty("ADMIN_PASSWORD", res.getResponseText());
     ui.alert("Admin password saved.");
   }
+}
+
+// ── ADMIN STUDIO (HtmlService) FUNCTIONS ─────────────────────────
+// Called from Index.html via google.script.run. All data calls require a token.
+
+function studioLogin(pass) {
+  const stored = getAdminPass_();
+  if (stored && pass === stored) return { status: "ok", token: makeToken_(stored) };
+  return { status: "error", message: "Invalid admin password." };
+}
+
+function authOk_(token) {
+  return !!token && token === makeToken_(getAdminPass_());
+}
+
+function studioStats(token) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  return { status: "ok", stats: getStats_() };
+}
+
+function studioRecords(token, form, limit) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  const cfg = SHEETS[form];
+  if (!cfg) return { status: "error", message: "Unknown form" };
+  return { status: "ok", total: countRows_(cfg.name), rows: getSheetData_(cfg.name, limit || 500) };
+}
+
+function studioExport(token, form) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  const cfg = SHEETS[form];
+  if (!cfg) return { status: "error", message: "Unknown form" };
+  return { status: "ok", csv: toCsv_(cfg.name, cfg.headers) };
+}
+
+function studioImport(token, form, rows) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  const cfg = SHEETS[form];
+  if (!cfg) return { status: "error", message: "Unknown form" };
+  if (!rows || !rows.length) return { status: "ok", inserted: 0 };
+  return { status: "ok", inserted: appendRows_(cfg, rows), form: form };
+}
+
+function studioGetSettings(token) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  return { status: "ok", settings: getSettingsMasked_() };
+}
+
+function studioSaveSettings(token, s) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  const p = PropertiesService.getScriptProperties();
+  if (s.blogId !== undefined) p.setProperty("BLOG_ID", (s.blogId || "").trim());
+  if (s.fbPageId !== undefined) p.setProperty("FB_PAGE_ID", (s.fbPageId || "").trim());
+  if (s.fbToken !== undefined) p.setProperty("FB_TOKEN", (s.fbToken || "").trim());
+  if (s.geminiKey !== undefined) p.setProperty("GEMINI_API_KEY", (s.geminiKey || "").trim());
+  if (s.folderId !== undefined) p.setProperty("FOLDER_ID", (s.folderId || "").trim());
+  return { status: "ok", message: "Settings saved." };
+}
+
+function getSettingsMasked_() {
+  const p = PropertiesService.getScriptProperties();
+  const mask = function (v) { return v ? v.substring(0, 6) + "••••••••" : ""; };
+  return {
+    blogId: p.getProperty("BLOG_ID") || "",
+    fbPageId: p.getProperty("FB_PAGE_ID") || "",
+    fbToken: mask(p.getProperty("FB_TOKEN")),
+    geminiKey: mask(p.getProperty("GEMINI_API_KEY")),
+    folderId: p.getProperty("FOLDER_ID") || ""
+  };
 }
 
 function json_(data) {
