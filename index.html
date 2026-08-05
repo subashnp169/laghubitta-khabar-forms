@@ -30,6 +30,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-s
 .pc-job .icon{background:#e8f4ec;color:var(--ok)}.pc-job::before{background:var(--ok)}
 .pc-help .icon{background:#fbeceb;color:var(--err)}.pc-help::before{background:var(--err)}
 .pc-senna .icon{background:var(--gold-light);color:var(--gold)}.pc-senna::before{background:var(--gold)}
+.pc-conf .icon{background:#f3ecfa;color:#6a3fa0}.pc-conf::before{background:#6a3fa0}
 .home-footer{text-align:center;margin-top:28px;font-size:10px;color:#aaa;line-height:1.6}
 .home-footer a{color:var(--navy-2);text-decoration:none}
 
@@ -108,6 +109,13 @@ textarea{resize:vertical;min-height:90px}
       <h3>SENNA Network</h3>
       <div class="np">सेन्ना नेटवर्क</div>
       <p>Join the genuine people's network supporting the community</p>
+      <span class="arrow">&rarr;</span>
+    </div>
+    <div class="portal-card pc-conf" onclick="openPortal('conf')">
+      <div class="icon">&#127917;</div>
+      <h3>Confession</h3>
+      <div class="np">गोप्य भनाइ</div>
+      <p>Share your experience anonymously — no name, no judgment</p>
       <span class="arrow">&rarr;</span>
     </div>
   </div>
@@ -310,6 +318,50 @@ textarea{resize:vertical;min-height:90px}
   </div>
 </div>
 
+<!-- ==================== CONFESSION ==================== -->
+<div class="portal" id="portal-conf">
+  <div class="topbar">
+    <button class="back" onclick="goHome()">&larr;</button>
+    <div class="eyebrow">Laghubitta Khabar</div>
+    <h1>Confession</h1>
+    <div class="np">गोप्य भनाइ</div>
+    <p>Share anonymously — no name, no judgment</p>
+  </div>
+  <div class="sec">
+    <div class="note">MFI, बैंक वा सहकारी क्षेत्रमा काम गर्ने वा ग्राहक रहनुभएका व्यक्तिहरूको मनको कुरा। नाम, मोबाइल वा कुनै पहिचान विवरण अनिवार्य छैन। तपाईंको भनाइ गोप्य रहन्छ र अनुमति बिना कहीँ प्रकाशित गरिँदैन।</div>
+    <form id="confForm">
+      <div class="card">
+        <h2><span class="hicon" style="background:#f3ecfa;color:#6a3fa0">&#127917;</span> Your Confession</h2>
+        <label>Category <span class="np">श्रेणी</span> <span class="req">*</span></label>
+        <div class="rg">
+          <label><input type="radio" name="ccat" value="MFI staff experience"> MFI staff experience</label>
+          <label><input type="radio" name="ccat" value="Cooperative / Bank staff"> Cooperative / Bank staff</label>
+          <label><input type="radio" name="ccat" value="Client / borrower story"> Client / borrower story</label>
+          <label><input type="radio" name="ccat" value="Job hunting journey"> Job hunting journey</label>
+          <label><input type="radio" name="ccat" value="Whistleblowing"> Whistleblowing</label>
+          <label><input type="radio" name="ccat" value="Personal / other"> Personal / other</label>
+        </div>
+        <label>Write your confession <span class="np">तपाईंको गोप्य भनाइ</span> <span class="req">*</span></label>
+        <textarea id="cText" required minlength="10" placeholder="तपाईंको मनको कुरा यहाँ लेख्नुहोस्... (अनाममा रहनेछ)"></textarea>
+        <label>Optional identifier <span class="np">वैकल्पिक पहिचान</span></label>
+        <input type="text" id="cName" placeholder="A nickname like 'Field Staff 7' (leave blank for anonymous)">
+        <label>District <span class="np">जिल्ला</span> <span class="np">(वैकल्पिक)</span></label>
+        <input type="text" id="cDistrict" placeholder="e.g. Banke (optional)">
+      </div>
+      <button type="submit" class="submit-btn" id="cSubmit">Submit Confession / पेश गर्नुहोस्</button>
+      <div class="msg" id="cMsg"></div>
+    </form>
+    <div class="success-screen" id="cSuccess" style="display:none">
+      <div class="check">&#10003;</div>
+      <h2>Thank You for Sharing</h2>
+      <div class="np">साझा गर्नुभएकोमा धन्यवाद</div>
+      <p>Your confession has been recorded anonymously.</p>
+      <button class="submit-btn" id="cAgain" style="max-width:280px;margin:16px auto 0">Submit Another / अर्को</button>
+    </div>
+    <div class="footer-note">Laghubitta Khabar &middot; A SENNA Network Initiative<br>लघुवित्त खबर &middot; SENNA नेटवर्क</div>
+  </div>
+</div>
+
 <script>
 var SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
@@ -457,6 +509,41 @@ document.getElementById("sAgain").addEventListener("click",function(){
   document.getElementById("sSuccess").style.display="none";
   document.getElementById("sennaForm").style.display="block";
   document.getElementById("sMsg").className="msg";
+});
+
+// ---- CONFESSION FORM ----
+document.getElementById("confForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var ccat=this.querySelector('input[name="ccat"]:checked');
+  if(!ccat){showMsg("cMsg","Please select a category.","err");return;}
+  if(!isConfigured()){showMsg("cMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
+
+  var payload={
+    form:"confession",
+    category:ccat.value,
+    text:document.getElementById("cText").value.trim(),
+    nickname:document.getElementById("cName").value.trim(),
+    district:document.getElementById("cDistrict").value.trim(),
+    timestamp:new Date().toISOString()
+  };
+
+  var btn=document.getElementById("cSubmit");
+  btn.disabled=true;btn.textContent="Submitting / पेश गर्दै...";
+  postForm(SCRIPT_URL,payload)
+  .then(function(){
+    document.getElementById("confForm").style.display="none";
+    document.getElementById("cSuccess").style.display="block";
+  }).catch(function(){
+    showMsg("cMsg","Network error. Please try again.","err");
+  }).finally(function(){
+    btn.disabled=false;btn.textContent="Submit Confession / पेश गर्नुहोस्";
+  });
+});
+document.getElementById("cAgain").addEventListener("click",function(){
+  document.getElementById("confForm").reset();
+  document.getElementById("cSuccess").style.display="none";
+  document.getElementById("confForm").style.display="block";
+  document.getElementById("cMsg").className="msg";
 });
 </script>
 </body>

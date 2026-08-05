@@ -5,6 +5,7 @@ Single-page bilingual (English + Nepali) portal with **3 forms** for the Laghubi
 1. **Job Career Sathi** - Free CV, cover letter & exam preparation help for MFI/bank/cooperative jobs
 2. **Client Help Model** - Grievance reporting: harassment, illegal interest, CIB problems
 3. **SENNA Network** - Membership registration for the genuine people's network
+4. **Confession** - Anonymous sharing of experiences (no identity required)
 
 ## Architecture
 
@@ -44,7 +45,7 @@ https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=https://<username>
 
 ## Google Sheets Structure
 
-The backend creates three sheets automatically:
+The backend creates four sheets automatically:
 
 **JobCareer:**
 | Timestamp | Full Name | Mobile | Email | Academic Qualification | District | Desired Sector | Help Needed | Notes |
@@ -55,7 +56,10 @@ The backend creates three sheets automatically:
 **SennaNetwork:**
 | Timestamp | Full Name | Mobile | Email | District | Profession | Contribution | Reason | Consent |
 
+**Confessions:**
+| Timestamp | Category | Confession | Nickname | District |
+
 ## API Endpoints
 
-- `POST` - Submit a form (`form: "job" | "help" | "senna"` in the JSON body)
+- `POST` - Submit a form (`form: "job" | "help" | "senna" | "confession"` in the JSON body)
 - `GET ?action=records&form=job` - Fetch all records for a form as JSON

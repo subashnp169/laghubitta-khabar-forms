@@ -11,7 +11,8 @@
 const SHEETS = {
   job: { name: "JobCareer", headers: ["Timestamp","Full Name","Mobile","Email","Academic Qualification","District","Desired Sector","Help Needed","Notes"] },
   help: { name: "ClientHelp", headers: ["Timestamp","Name","Mobile","Institution Name","Institution Type","Issue Type","Issue Description","Preferred Contact"] },
-  senna: { name: "SennaNetwork", headers: ["Timestamp","Full Name","Mobile","Email","District","Profession","Contribution","Reason","Consent"] }
+  senna: { name: "SennaNetwork", headers: ["Timestamp","Full Name","Mobile","Email","District","Profession","Contribution","Reason","Consent"] },
+  confession: { name: "Confessions", headers: ["Timestamp","Category","Confession","Nickname","District"] }
 };
 
 function doPost(e) {
@@ -22,6 +23,7 @@ function doPost(e) {
     if (form === "job") return submitRow_("job", data);
     if (form === "help") return submitRow_("help", data);
     if (form === "senna") return submitRow_("senna", data);
+    if (form === "confession") return submitRow_("confession", data);
 
     return error_("Unknown form type: " + form);
   } catch (err) {
@@ -59,6 +61,10 @@ function submitRow_(form, data) {
     sheet.appendRow([
       timestamp, data.fullName, data.mobile, data.email,
       data.district, data.profession, data.contribution, data.reason, data.consent
+    ]);
+  } else if (form === "confession") {
+    sheet.appendRow([
+      timestamp, data.category, data.text, data.nickname, data.district
     ]);
   }
 
