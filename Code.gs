@@ -168,12 +168,14 @@ function getSheetData_(name, limit) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(name);
   if (!sheet) return [];
-  const data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return [];
-  const headers = data[0];
-  const body = data.slice(1);
-  const selected = body.slice(-limit).reverse();
-  return selected.map(function (row) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+  const numCols = sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, numCols).getValues()[0];
+  const want = Math.min(limit, lastRow - 1);
+  const start = lastRow - want + 1;
+  const values = sheet.getRange(start, 1, want, numCols).getValues().reverse();
+  return values.map(function (row) {
     const obj = {};
     headers.forEach(function (h, j) { obj[h] = row[j]; });
     return obj;
@@ -247,14 +249,22 @@ function authOk_(token) {
 
 function studioStats(token) {
   if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
-  return { status: "ok", stats: getStats_() };
+  try {
+    return { status: "ok", stats: getStats_() };
+  } catch (err) {
+    return { status: "error", message: err.message };
+  }
 }
 
 function studioRecords(token, form, limit) {
   if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
   const cfg = SHEETS[form];
   if (!cfg) return { status: "error", message: "Unknown form" };
-  return { status: "ok", total: countRows_(cfg.name), rows: getSheetData_(cfg.name, limit || 500) };
+  try {
+    return { status: "ok", total: countRows_(cfg.name), rows: getSheetData_(cfg.name, limit || 500) };
+  } catch (err) {
+    return { status: "error", message: "Record load failed: " + err.message };
+  }
 }
 
 function studioExport(token, form) {
