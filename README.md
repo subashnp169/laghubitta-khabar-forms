@@ -43,7 +43,7 @@ QR code -> GitHub Pages (index.html) -> fetch(POST) -> Google Apps Script Web Ap
 
 1. In the Apps Script editor, click **+** next to Files -> HTML
 2. Name it exactly `Index`
-3. Delete the default content and paste the contents of `Index.html`
+3. Delete the default content and paste the contents of `studio.html`
 4. Save. Visiting your **Web App URL** (with no query string) now opens the **Admin Studio** — password-protected dashboard with Records, Bulk Import, and Settings tabs
 
 ### 4. Deploy to GitHub
@@ -105,6 +105,7 @@ The Studio's **Settings** tab already stores `BLOG_ID`, `FB_PAGE_ID`, `FB_TOKEN`
 ## Project Files
 
 - `Code.gs` — Apps Script backend (form intake, admin auth, REST + Studio routes)
-- `Index.html` — Admin Studio UI (served from the Web App URL)
+- `studio.html` — Admin Studio UI (paste into Apps Script as an HTML file named `Index`)
 - `index.html` — public forms portal on GitHub Pages
+- `logo.webp` — portal logo
 - `README.md` — this file

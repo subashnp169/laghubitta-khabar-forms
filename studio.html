@@ -1,0 +1,387 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laghubitta Khabar — Admin Studio</title>
+<style>
+:root{--navy:#0b2545;--navy-2:#123a6b;--gold:#c8952b;--gold-light:#f0e6d0;--paper:#f4f6f9;--ink:#1c2530;--line:#d7dce3;--ok:#1e7a3d;--err:#b3261e;--white:#fff;--muted:#8a93a3}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink);font-size:14px}
+/* ---- Login overlay ---- */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy),var(--navy-2));display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+#loginScreen.hidden{display:none}
+.login-card{background:#fff;border-radius:16px;padding:36px 30px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card .logo{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy-2));color:var(--gold);font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.login-card h1{text-align:center;font-size:18px;color:var(--navy)}
+.login-card p{text-align:center;font-size:12px;color:#999;margin:4px 0 20px}
+label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px}
+input[type=text],input[type=password],textarea,select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff;transition:.2s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy-2);box-shadow:0 0 0 3px rgba(18,58,107,.08)}
+.btn{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border:none;padding:12px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
+.btn:hover{box-shadow:0 4px 14px rgba(11,37,69,.25)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:#fff;border:1.5px solid var(--navy-2);color:var(--navy-2);padding:9px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-ghost:hover{background:var(--navy-2);color:#fff}
+.msg{display:none;padding:11px 13px;border-radius:9px;font-size:12px;margin-top:12px}
+.msg.show{display:block}
+.msg.ok{background:#eaf6ee;color:var(--ok);border:1px solid #bfe3c9}
+.msg.err{background:#fbeceb;color:var(--err);border:1px solid #f2c6c3}
+/* ---- Layout ---- */
+#app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--navy);color:#fff;padding:20px 14px;position:fixed;top:0;bottom:0;left:0;display:flex;flex-direction:column;z-index:10}
+.sidebar .brand{display:flex;align-items:center;gap:10px;padding:6px 10px 18px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:14px}
+.sidebar .brand .bl{width:36px;height:36px;border-radius:50%;background:var(--gold);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar .brand b{font-size:14px;display:block;line-height:1.2}
+.sidebar .brand span{font-size:10px;color:var(--gold);letter-spacing:.06em}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;cursor:pointer;font-size:13px;color:#c9d4e4;margin-bottom:4px;transition:.2s;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.on{background:var(--gold);color:#fff;font-weight:700}
+.nav-item.locked{opacity:.45;cursor:not-allowed}
+.nav-item .tag{margin-left:auto;font-size:9px;background:rgba(255,255,255,.15);padding:2px 7px;border-radius:10px;letter-spacing:.04em}
+.sidebar .foot{margin-top:auto;font-size:10px;color:#7f8ba0;padding:10px;line-height:1.6;border-top:1px solid rgba(255,255,255,.1)}
+.main{margin-left:250px;flex:1;padding:28px 30px}
+.page{display:none}
+.page.on{display:block}
+.page h1{font-size:20px;color:var(--navy);margin-bottom:4px}
+.page .sub{font-size:12px;color:var(--muted);margin-bottom:22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 2px 10px rgba(11,37,69,.05)}
+.card h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--navy-2);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:8px}
+/* Dashboard */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;border-top:4px solid var(--navy)}
+.stat.green{border-top-color:var(--ok)}.stat.red{border-top-color:var(--err)}.stat.gold{border-top-color:var(--gold)}.stat.purple{border-top-color:#6a3fa0}
+.stat b{display:block;font-size:26px;color:var(--navy);margin-bottom:2px}
+.stat span{font-size:11px;color:var(--muted)}
+/* Records */
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.pill{background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--navy);transition:.2s}
+.pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.table-wrap{max-height:480px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--navy);color:#fff;position:sticky;top:0;z-index:1;font-weight:600}
+tr:nth-child(even){background:#fafbfc}
+.empty{text-align:center;color:#999;padding:28px;font-size:12px}
+.count-note{font-size:11px;color:var(--muted);margin-top:10px}
+/* Import */
+.hint{background:var(--gold-light);border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-size:12px;color:#6b5320;line-height:1.6;margin-bottom:14px}
+textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+/* Settings */
+.set-row{margin-bottom:16px}
+.set-row .lbl{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px}
+.set-row .hlp{font-size:11px;color:var(--muted);margin-top:4px}
+.locked-note{margin-top:22px;background:#f7f8fa;border:1px dashed var(--line);border-radius:10px;padding:14px;font-size:12px;color:var(--muted);line-height:1.7}
+@media(max-width:820px){.sidebar{width:60px;padding:16px 8px}.sidebar .brand b,.sidebar .brand span,.nav-item span.txt,.nav-item .tag,.sidebar .foot{display:none}.sidebar .nav-item{justify-content:center;padding:12px}.main{margin-left:60px;padding:18px}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- ==================== LOGIN ==================== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="logo">LK</div>
+    <h1>Admin Studio</h1>
+    <p>लघुवित्त खबर — व्यवस्थापक प्यानल</p>
+    <label>Admin Password</label>
+    <input type="password" id="pass" onkeydown="if(event.key==='Enter')doLogin()" placeholder="Enter admin password">
+    <button class="btn" id="loginBtn" style="width:100%;margin-top:14px" onclick="doLogin()">Login / लगइन</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div id="app" style="display:none">
+  <div class="sidebar">
+    <div class="brand"><div class="bl">LK</div><div><b>Admin Studio</b><span>LAGHUBITTA KHABAR</span></div></div>
+    <button class="nav-item on" id="nav-dash" onclick="nav('dash')">&#128202; <span class="txt">Dashboard</span></button>
+    <button class="nav-item" id="nav-records" onclick="nav('records')">&#128196; <span class="txt">Records</span></button>
+    <button class="nav-item" id="nav-import" onclick="nav('import')">&#128228; <span class="txt">Bulk Import</span></button>
+    <button class="nav-item" id="nav-settings" onclick="nav('settings')">&#9881; <span class="txt">Settings</span></button>
+    <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px"></div>
+    <button class="nav-item locked" title="Step 2"><span class="txt">&#129302; Confessions Queue</span><span class="tag">Step 2</span></button>
+    <button class="nav-item locked" title="Step 3"><span class="txt">&#9997; Content Studio</span><span class="tag">Step 3</span></button>
+    <button class="nav-item locked" title="Step 4"><span class="txt">&#127760; Platform Redesign</span><span class="tag">Step 4</span></button>
+    <div class="foot">Laghubitta Khabar<br>SENNA Network Initiative</div>
+  </div>
+
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div class="page on" id="page-dash">
+      <h1>Dashboard</h1>
+      <p class="sub">Live record counts from your Google Sheet database</p>
+      <div class="stats" id="statCards"></div>
+      <div class="card" style="margin-top:18px">
+        <h2>How to use the Studio</h2>
+        <div style="font-size:13px;color:#555;line-height:1.9">
+          <b>Records</b> — view the latest submissions per form, export CSV.<br>
+          <b>Bulk Import</b> — paste SENNA members as CSV (ideal for your 1.12 lakh list, ~5,000 rows per batch).<br>
+          <b>Settings</b> — save keys for upcoming steps (Blogger, Facebook, Gemini).<br>
+          <b>Coming next:</b> Confessions review queue (Step 2), Content Studio (Step 3), Platform redesign (Step 4).
+        </div>
+      </div>
+    </div>
+
+    <!-- RECORDS -->
+    <div class="page" id="page-records">
+      <h1>Records</h1>
+      <p class="sub">Latest submissions per form (newest first, up to 500 shown)</p>
+      <div class="pills" id="pills"></div>
+      <div class="tools">
+        <button class="btn-ghost" onclick="refreshRecords()">&#8635; Refresh</button>
+        <button class="btn-ghost" onclick="exportCSV()">&#11015; Export CSV (all rows)</button>
+      </div>
+      <div class="table-wrap" id="tableWrap"><div class="empty">Loading...</div></div>
+      <div class="count-note" id="countNote"></div>
+    </div>
+
+    <!-- IMPORT -->
+    <div class="page" id="page-import">
+      <h1>Bulk Import — SENNA Members</h1>
+      <p class="sub">Load large member lists straight into the database</p>
+      <div class="card">
+        <div class="hint">
+          Paste CSV rows for the <b>SennaNetwork</b> sheet. Column order (header row optional):<br>
+          <b>Full Name, Mobile, Email, Home District, Category, Institution, Profession, Contribution, Reason, Consent</b><br>
+          Blank <b>Category</b> becomes <b>Microfinance</b>. Recommended: ~5,000 rows per batch.
+        </div>
+        <label>CSV Rows</label>
+        <textarea id="importText" placeholder="Sita Gurung,98XXXXXXXX,,Kathmandu,Microfinance,Infinity Laghubitta,MFI Employee,Community support,,Yes&#10;Ramesh Adhikari,97XXXXXXXX,,Lalitpur,Microfinance,Infinity Laghubitta,Agent,Volunteer,,Yes"></textarea>
+        <button class="btn" id="importBtn" style="margin-top:14px" onclick="doImport()">Import Rows</button>
+        <div class="msg" id="importMsg"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <h1>Settings</h1>
+      <p class="sub">Credentials for upcoming automation steps — stored securely in Script Properties</p>
+      <div class="card">
+        <div class="set-row">
+          <div class="lbl">Blogger Blog ID</div>
+          <input type="text" id="sBlogId" placeholder="e.g. 1234567890123456789">
+          <div class="hlp">Step 2 — publishing confessions / articles</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Facebook Page ID</div>
+          <input type="text" id="sFbPageId" placeholder="e.g. 123456789012345">
+          <div class="hlp">Step 2 — posting updates</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Facebook Page Access Token</div>
+          <input type="password" id="sFbToken" placeholder="EAAG... (long-lived, pages_manage_posts)">
+          <div class="hlp">Leave blank to keep the current value</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Gemini API Key</div>
+          <input type="password" id="sGeminiKey" placeholder="AIza...">
+          <div class="hlp">Step 3 — AI content engine. Leave blank to keep the current value</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Google Drive Folder ID (field photos)</div>
+          <input type="text" id="sFolderId" placeholder="Folder ID from Drive URL">
+          <div class="hlp">Step 2 — staff field reports</div>
+        </div>
+        <button class="btn" id="settingsBtn" onclick="saveSettings()">Save Settings</button>
+        <div class="msg" id="settingsMsg"></div>
+      </div>
+      <div class="locked-note">
+        <b>Step-by-step roadmap:</b><br>
+        &#10003; Step 1 — Portal + Admin Studio (done)<br>
+        &#9679; Step 2 — Confessions review &amp; publish queue<br>
+        &#9679; Step 3 — Content Studio (Gemini articles + manual publish)<br>
+        &#9679; Step 4 — Full Laghubitta Khabar platform redesign
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var FORMS = [
+  {key:"job", label:"Job Career Sathi"},
+  {key:"help", label:"Client Help"},
+  {key:"senna", label:"SENNA Network"},
+  {key:"confession", label:"Confession"}
+];
+var CUR = "senna";
+var TOKEN = sessionStorage.getItem("lkStudioToken") || "";
+
+function esc(s){
+  return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function showMsg(id,text,type){
+  var m=document.getElementById(id);
+  m.textContent=text; m.className="msg show "+type;
+  if(type==="ok"){ setTimeout(function(){m.className="msg";},6000); }
+}
+function run(fnName,args,onOk,onErr){
+  var r=google.script.run.withSuccessHandler(onOk).withFailureHandler(function(e){
+    if(onErr) onErr(e); else alert("Error: "+(e&&e.message?e.message:e));
+  });
+  if(args&&args.length){ r=r[fnName].apply(r,args); } else { r=r[fnName](); }
+}
+
+/* ---------- LOGIN ---------- */
+function doLogin(){
+  var pass=document.getElementById("pass").value;
+  if(!pass){showMsg("loginMsg","Enter the admin password.","err");return;}
+  document.getElementById("loginBtn").disabled=true;
+  run("studioLogin",[pass],function(d){
+    if(d.status==="ok"){
+      TOKEN=d.token; sessionStorage.setItem("lkStudioToken",d.token);
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("app").style.display="flex";
+      boot();
+    } else {
+      showMsg("loginMsg",d.message||"Login failed.","err");
+    }
+    document.getElementById("loginBtn").disabled=false;
+  });
+}
+
+/* ---------- NAV ---------- */
+function nav(name){
+  document.querySelectorAll(".nav-item").forEach(function(b){b.classList.remove("on");});
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("on");});
+  document.getElementById("nav-"+name).classList.add("on");
+  document.getElementById("page-"+name).classList.add("on");
+  if(name==="dash") loadStats();
+  if(name==="records") loadRecords();
+  if(name==="settings") loadSettings();
+}
+
+function boot(){
+  nav("dash");
+  loadStats();
+  renderPills();
+}
+
+/* ---------- DASHBOARD ---------- */
+function loadStats(){
+  run("studioStats",[TOKEN],function(d){
+    if(d.status!=="ok"){ document.getElementById("statCards").innerHTML='<div class="empty">'+esc(d.message)+"</div>"; return; }
+    var colors={job:"",help:"red",senna:"gold",confession:"purple"};
+    var html="";
+    FORMS.forEach(function(f){
+      html+='<div class="stat '+colors[f.key]+'"><b>'+Number(d.stats[f.key]||0).toLocaleString()+'</b><span>'+esc(f.label)+"</span></div>";
+    });
+    document.getElementById("statCards").innerHTML=html;
+  });
+}
+
+/* ---------- RECORDS ---------- */
+function renderPills(){
+  var box=document.getElementById("pills"); box.innerHTML="";
+  FORMS.forEach(function(f){
+    var b=document.createElement("button");
+    b.className="pill"+(f.key===CUR?" on":""); b.textContent=f.label;
+    b.onclick=function(){CUR=f.key;renderPills();loadRecords();};
+    box.appendChild(b);
+  });
+}
+function loadRecords(){
+  var wrap=document.getElementById("tableWrap");
+  wrap.innerHTML='<div class="empty">Loading...</div>';
+  document.getElementById("countNote").textContent="";
+  run("studioRecords",[TOKEN,CUR,500],function(d){
+    if(d.status!=="ok"){ wrap.innerHTML='<div class="empty">'+esc(d.message)+"</div>"; return; }
+    var rows=d.rows||[];
+    if(!rows.length){ wrap.innerHTML='<div class="empty">No records yet.</div>'; }
+    else {
+      var keys=Object.keys(rows[0]);
+      var html="<table><thead><tr>";
+      keys.forEach(function(k){ html+="<th>"+esc(k)+"</th>"; });
+      html+="</tr></thead><tbody>";
+      rows.forEach(function(r){
+        html+="<tr>";
+        keys.forEach(function(k){ html+="<td>"+esc(r[k])+"</td>"; });
+        html+="</tr>";
+      });
+      html+="</tbody></table>";
+      wrap.innerHTML=html;
+    }
+    document.getElementById("countNote").textContent="Showing latest "+rows.length+" of "+(d.total||rows.length)+" records";
+  });
+}
+function refreshRecords(){ loadRecords(); }
+
+/* ---------- EXPORT ---------- */
+function exportCSV(){
+  run("studioExport",[TOKEN,CUR],function(d){
+    if(d.status!=="ok"){ alert(d.message||"Export failed"); return; }
+    var blob=new Blob(["\ufeff"+d.csv],{type:"text/csv;charset=utf-8"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=CUR+"_export.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+}
+
+/* ---------- IMPORT ---------- */
+function doImport(){
+  var text=document.getElementById("importText").value.trim();
+  if(!text){showMsg("importMsg","Paste some CSV rows first.","err");return;}
+  var lines=text.split(/\r?\n/).filter(function(l){return l.trim().length>0;});
+  var rows=[];
+  lines.forEach(function(line){
+    var c=line.split(",").map(function(x){return x.trim();});
+    if(c[0] && c[0].toLowerCase().indexOf("full name")!==-1) return;
+    var r=Array(10).fill("");
+    c.slice(0,10).forEach(function(v,i){r[i]=v;});
+    if(!r[4]) r[4]="Microfinance";
+    rows.push(r);
+  });
+  if(!rows.length){showMsg("importMsg","No valid rows found.","err");return;}
+  var btn=document.getElementById("importBtn");
+  btn.disabled=true; btn.textContent="Importing "+rows.length+" rows...";
+  run("studioImport",[TOKEN,"senna",rows],function(d){
+    showMsg("importMsg",d.status==="ok" ? "Imported "+d.inserted+" rows successfully." : (d.message||"Import failed."), d.status==="ok"?"ok":"err");
+    btn.disabled=false; btn.textContent="Import Rows";
+    if(d.status==="ok"){ document.getElementById("importText").value=""; loadStats(); }
+  },function(){
+    btn.disabled=false; btn.textContent="Import Rows";
+  });
+}
+
+/* ---------- SETTINGS ---------- */
+function loadSettings(){
+  run("studioGetSettings",[TOKEN],function(d){
+    if(d.status!=="ok") return;
+    var s=d.settings||{};
+    document.getElementById("sBlogId").value=s.blogId||"";
+    document.getElementById("sFbPageId").value=s.fbPageId||"";
+    document.getElementById("sFbToken").value=s.fbToken||"";
+    document.getElementById("sGeminiKey").value=s.geminiKey||"";
+    document.getElementById("sFolderId").value=s.folderId||"";
+  });
+}
+function saveSettings(){
+  var s={
+    blogId:document.getElementById("sBlogId").value,
+    fbPageId:document.getElementById("sFbPageId").value,
+    fbToken:document.getElementById("sFbToken").value,
+    geminiKey:document.getElementById("sGeminiKey").value,
+    folderId:document.getElementById("sFolderId").value
+  };
+  var btn=document.getElementById("settingsBtn");
+  btn.disabled=true;
+  run("studioSaveSettings",[TOKEN,s],function(d){
+    showMsg("settingsMsg",d.status==="ok"?(d.message||"Saved."):(d.message||"Failed."),d.status==="ok"?"ok":"err");
+    btn.disabled=false;
+    if(d.status==="ok"){ setTimeout(loadSettings,600); }
+  },function(){ btn.disabled=false; });
+}
+
+/* ---------- BOOT ---------- */
+window.addEventListener("load",function(){
+  if(TOKEN){
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("app").style.display="flex";
+    boot();
+  }
+});
+</script>
+</body>
+</html>
