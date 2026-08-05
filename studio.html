@@ -74,6 +74,29 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
 .set-row .lbl{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px}
 .set-row .hlp{font-size:11px;color:var(--muted);margin-top:4px}
 .locked-note{margin-top:22px;background:#f7f8fa;border:1px dashed var(--line);border-radius:10px;padding:14px;font-size:12px;color:var(--muted);line-height:1.7}
+/* Confessions queue */
+.conf-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(11,37,69,.05)}
+.conf-card .conf-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.conf-cat{background:var(--gold-light);color:#6b5320;border:1px solid #e2cd9a;border-radius:16px;padding:3px 10px;font-size:11px;font-weight:700}
+.conf-status{font-size:10px;font-weight:700;border-radius:12px;padding:3px 9px;letter-spacing:.04em;text-transform:uppercase}
+.st-pending{background:#fdf2dc;color:#8a5a00}.st-approved{background:#e8f4ec;color:#1e7a3d}.st-rejected{background:#fbeceb;color:#b3261e}.st-published{background:#e7f0fb;color:#123a6b}
+.conf-text{font-size:14px;color:var(--ink);line-height:1.6;white-space:pre-wrap;margin:6px 0 10px}
+.conf-meta{font-size:11px;color:var(--muted);margin-bottom:10px}
+.conf-links{font-size:11px;color:var(--navy-2);margin-bottom:10px;word-break:break-all}
+.conf-actions{display:flex;flex-wrap:wrap;gap:8px}
+.conf-actions .btn-ghost{padding:7px 12px;font-size:11px}
+.conf-actions .btn-ghost.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.conf-actions .btn-ghost.danger{background:var(--err);border-color:var(--err);color:#fff}
+.conf-actions .btn-ghost:disabled{opacity:.5;cursor:not-allowed}
+/* Modal */
+#modalOverlay{position:fixed;inset:0;background:rgba(11,20,35,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.modal h2{font-size:16px;color:var(--navy);margin-bottom:4px}
+.modal .sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.modal textarea{min-height:120px;margin-top:4px}
+.modal label{margin-top:14px}
+.modal .modal-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.modal .msg{margin-top:14px}
 @media(max-width:820px){.sidebar{width:60px;padding:16px 8px}.sidebar .brand b,.sidebar .brand span,.nav-item span.txt,.nav-item .tag,.sidebar .foot{display:none}.sidebar .nav-item{justify-content:center;padding:12px}.main{margin-left:60px;padding:18px}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -99,9 +122,9 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
     <button class="nav-item on" id="nav-dash" onclick="nav('dash')">&#128202; <span class="txt">Dashboard</span></button>
     <button class="nav-item" id="nav-records" onclick="nav('records')">&#128196; <span class="txt">Records</span></button>
     <button class="nav-item" id="nav-import" onclick="nav('import')">&#128228; <span class="txt">Bulk Import</span></button>
+    <button class="nav-item" id="nav-confess" onclick="nav('confess')">&#129302; <span class="txt">Confessions Queue</span></button>
     <button class="nav-item" id="nav-settings" onclick="nav('settings')">&#9881; <span class="txt">Settings</span></button>
     <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px"></div>
-    <button class="nav-item locked" title="Step 2"><span class="txt">&#129302; Confessions Queue</span><span class="tag">Step 2</span></button>
     <button class="nav-item locked" title="Step 3"><span class="txt">&#9997; Content Studio</span><span class="tag">Step 3</span></button>
     <button class="nav-item locked" title="Step 4"><span class="txt">&#127760; Platform Redesign</span><span class="tag">Step 4</span></button>
     <div class="foot">Laghubitta Khabar<br>SENNA Network Initiative</div>
@@ -118,8 +141,9 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
         <div style="font-size:13px;color:#555;line-height:1.9">
           <b>Records</b> — view the latest submissions per form, export CSV.<br>
           <b>Bulk Import</b> — paste SENNA members as CSV (ideal for your 1.12 lakh list, ~5,000 rows per batch).<br>
-          <b>Settings</b> — save keys for upcoming steps (Blogger, Facebook, Gemini).<br>
-          <b>Coming next:</b> Confessions review queue (Step 2), Content Studio (Step 3), Platform redesign (Step 4).
+          <b>Confessions Queue</b> — review anonymous confessions and publish them to Blogger / Facebook.<br>
+          <b>Settings</b> — keys for Blogger + Facebook publishing (Step 2).<br>
+          <b>Coming next:</b> Content Studio (Step 3), Platform redesign (Step 4).
         </div>
       </div>
     </div>
@@ -154,6 +178,18 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
       </div>
     </div>
 
+    <!-- CONFESSIONS QUEUE -->
+    <div class="page" id="page-confess">
+      <h1>Confessions Queue</h1>
+      <p class="sub">Review anonymous submissions, then publish to Blogger / Facebook manually</p>
+      <div class="pills" id="confPills"></div>
+      <div class="tools">
+        <button class="btn-ghost" onclick="loadConfessions()">&#8635; Refresh</button>
+        <span style="font-size:11px;color:var(--muted);align-self:center">Published items get a &#10003; and their links are saved in the sheet</span>
+      </div>
+      <div id="confList"><div class="empty">Loading...</div></div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <h1>Settings</h1>
@@ -165,6 +201,26 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
           <div class="hlp">Step 2 — publishing confessions / articles</div>
         </div>
         <div class="set-row">
+          <div class="lbl">Blogger Access Token</div>
+          <input type="password" id="sBloggerToken" placeholder="ya29... (Blogger API scope, OAuth Playground)">
+          <div class="hlp">Get it from Google OAuth Playground (scope: https://www.googleapis.com/auth/blogger). Leave blank to keep the current value</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Blogger Refresh Token <span style="font-weight:400">(optional — auto-refresh)</span></div>
+          <input type="password" id="sBloggerRefresh" placeholder="1//0xxxxxxxx...">
+          <div class="hlp">Advanced: lets the script refresh the access token automatically. Leave blank to keep the current value</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Blogger OAuth Client ID <span style="font-weight:400">(optional)</span></div>
+          <input type="text" id="sBloggerClientId" placeholder="xxxx.apps.googleusercontent.com">
+          <div class="hlp">Only needed together with Refresh Token</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Blogger OAuth Client Secret <span style="font-weight:400">(optional)</span></div>
+          <input type="password" id="sBloggerClientSecret" placeholder="GOCSPX-...">
+          <div class="hlp">Only needed together with Refresh Token. Leave blank to keep the current value</div>
+        </div>
+        <div class="set-row">
           <div class="lbl">Facebook Page ID</div>
           <input type="text" id="sFbPageId" placeholder="e.g. 123456789012345">
           <div class="hlp">Step 2 — posting updates</div>
@@ -172,7 +228,7 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
         <div class="set-row">
           <div class="lbl">Facebook Page Access Token</div>
           <input type="password" id="sFbToken" placeholder="EAAG... (long-lived, pages_manage_posts)">
-          <div class="hlp">Leave blank to keep the current value</div>
+          <div class="hlp">Needed for Step 2 publishing. Get a long-lived page token from a Facebook app with pages_manage_posts + publish_pages. Leave blank to keep the current value</div>
         </div>
         <div class="set-row">
           <div class="lbl">Gemini API Key</div>
@@ -190,12 +246,17 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
       <div class="locked-note">
         <b>Step-by-step roadmap:</b><br>
         &#10003; Step 1 — Portal + Admin Studio (done)<br>
-        &#9679; Step 2 — Confessions review &amp; publish queue<br>
+        &#10003; Step 2 — Confessions review &amp; publish queue (done)<br>
         &#9679; Step 3 — Content Studio (Gemini articles + manual publish)<br>
         &#9679; Step 4 — Full Laghubitta Khabar platform redesign
       </div>
     </div>
   </div>
+</div>
+
+<!-- ==================== PUBLISH MODAL ==================== -->
+<div id="modalOverlay" style="display:none">
+  <div class="modal" id="modalBox"></div>
 </div>
 
 <script>
@@ -249,6 +310,7 @@ function nav(name){
   document.getElementById("page-"+name).classList.add("on");
   if(name==="dash") loadStats();
   if(name==="records") loadRecords();
+  if(name==="confess") loadConfessions();
   if(name==="settings") loadSettings();
 }
 
@@ -256,6 +318,7 @@ function boot(){
   nav("dash");
   loadStats();
   renderPills();
+  renderConfPills();
 }
 
 /* ---------- DASHBOARD ---------- */
@@ -345,12 +408,176 @@ function doImport(){
   });
 }
 
+/* ---------- CONFESSIONS QUEUE ---------- */
+var CONF_STATUS = "Pending";
+var CONF_STATES = ["All","Pending","Approved","Published","Rejected"];
+
+function renderConfPills(){
+  var box=document.getElementById("confPills"); box.innerHTML="";
+  CONF_STATES.forEach(function(s){
+    var b=document.createElement("button");
+    b.className="pill"+(s===CONF_STATUS?" on":"");
+    b.textContent=s;
+    b.onclick=function(){CONF_STATUS=s;renderConfPills();loadConfessions();};
+    box.appendChild(b);
+  });
+}
+function loadConfessions(){
+  var box=document.getElementById("confList");
+  box.innerHTML='<div class="empty">Loading...</div>';
+  run("studioConfessions",[TOKEN,CONF_STATUS],function(d){
+    if(d.status!=="ok"){ box.innerHTML='<div class="empty">'+esc(d.message)+"</div>"; return; }
+    var rows=d.rows||[];
+    if(!rows.length){ box.innerHTML='<div class="empty">No '+CONF_STATUS.toLowerCase()+' confessions.</div>'; return; }
+    var html="";
+    rows.forEach(function(c){
+      var st="st-"+c.status.toLowerCase();
+      var links=c.published ? '<div class="conf-links">&#128279; '+esc(c.published)+"</div>" : "";
+      var acts=renderConfActions(c);
+      html+='<div class="conf-card">'
+        +'<div class="conf-top">'
+        +'<span class="conf-cat">'+esc(c.category)+"</span>"
+        +'<span class="conf-status '+st+'">'+esc(c.status)+"</span>"
+        +'<span style="font-size:11px;color:var(--muted)">'+esc(c.timestamp)+"</span>"
+        +'</div>'
+        +'<div class="conf-text">'+esc(c.confession)+"</div>"
+        +'<div class="conf-meta">'+esc(c.nickname||"Anonymous")+(c.district?" &middot; "+esc(c.district):"")+"</div>"
+        +links
+        +'<div class="conf-actions">'+acts+"</div>"
+        +'</div>';
+    });
+    box.innerHTML=html;
+  });
+}
+function renderConfActions(c){
+  var out="";
+  if(c.status==="Pending"){
+    out+='<button class="btn-ghost ok" onclick="setConfStatus('+c.id+',\'Approved\')">&#10003; Approve</button>';
+    out+='<button class="btn-ghost danger" onclick="setConfStatus('+c.id+',\'Rejected\')">&#10007; Reject</button>';
+  } else if(c.status==="Approved"){
+    out+='<button class="btn-ghost ok" onclick="publishBlogger('+c.id+')">&#128278; Publish to Blogger</button>';
+    out+='<button class="btn-ghost ok" onclick="publishFacebook('+c.id+')">&#128209; Publish to Facebook</button>';
+    out+='<button class="btn-ghost" onclick="setConfStatus('+c.id+',\'Pending\')">Back to Pending</button>';
+  } else if(c.status==="Published"){
+    if(!c.published || c.published.indexOf("Blogger")===-1) out+='<button class="btn-ghost ok" onclick="publishBlogger('+c.id+')">&#128278; Publish to Blogger</button>';
+    if(!c.published || c.published.indexOf("Facebook")===-1) out+='<button class="btn-ghost ok" onclick="publishFacebook('+c.id+')">&#128209; Publish to Facebook</button>';
+    out+='<button class="btn-ghost" onclick="setConfStatus('+c.id+',\'Approved\')">Edit &amp; Republish</button>';
+  } else if(c.status==="Rejected"){
+    out+='<button class="btn-ghost" onclick="setConfStatus('+c.id+',\'Approved\')">&#8635; Restore</button>';
+  }
+  return out;
+}
+function setConfStatus(id,status){
+  if(status==="Rejected" && !confirm("Reject this confession? It will stay in the sheet but be hidden from the Pending list.")) return;
+  run("studioSetConfession",[TOKEN,id,status],function(d){
+    alert(d.status==="ok" ? "Status updated to "+status : (d.message||"Failed."));
+    if(d.status==="ok") loadConfessions();
+  });
+}
+
+/* ---------- PUBLISH MODALS ---------- */
+function openModal(html){
+  document.getElementById("modalBox").innerHTML=html;
+  document.getElementById("modalOverlay").style.display="flex";
+}
+function closeModal(){
+  document.getElementById("modalOverlay").style.display="none";
+  loadConfessions();
+}
+function publishBlogger(id){
+  var title="Anonymous Confession — A Voice from the MFI Sector";
+  run("studioConfessions",[TOKEN,"All"],function(d){
+    var item=null;
+    (d.rows||[]).forEach(function(r){ if(String(r.id)===String(id)) item=r; });
+    if(!item) return;
+    var preview=item.confession;
+    var meta=(item.nickname?item.nickname:"Anonymous")+(item.district?", "+item.district:"");
+    openModal(
+      '<h2>&#128278; Publish to Blogger</h2>'
+      +'<p class="sub">Post appears on your blog. Edit the title &amp; body before publishing.</p>'
+      +'<label>Title</label>'
+      +'<input type="text" id="bTitle" value="'+escAttr(title)+'">'
+      +'<label>Body (HTML)</label>'
+      +'<textarea id="bBody"><p>'+escHtml(preview)+'</p><p><i>— '+escHtml(meta)+'</i></p><p><i>Published by Laghubitta Khabar | SENNA Network</i></p></textarea>'
+      +'<div class="modal-actions">'
+      +'<button class="btn" id="bGo" onclick="doPublishBlogger('+id+')">Publish Now</button>'
+      +'<button class="btn-ghost" onclick="closeModal()">Cancel</button>'
+      +'</div>'
+      +'<div class="msg" id="bMsg"></div>'
+    );
+  });
+}
+function doPublishBlogger(id){
+  var title=document.getElementById("bTitle").value.trim();
+  var body=document.getElementById("bBody").value;
+  if(!title){showMsg("bMsg","Enter a title.","err");return;}
+  var btn=document.getElementById("bGo");
+  btn.disabled=true; btn.textContent="Publishing...";
+  run("studioPublishBlogger",[TOKEN,id,title,body],function(d){
+    btn.disabled=false; btn.textContent="Publish Now";
+    if(d.status==="ok"){
+      showMsg("bMsg",'Published! <a href="'+escAttr(d.url)+'" target="_blank" rel="noopener">Open post</a>',"ok");
+      setTimeout(closeModal,2000);
+    } else {
+      showMsg("bMsg",d.message||"Publish failed.","err");
+    }
+  },function(){ btn.disabled=false; btn.textContent="Publish Now"; });
+}
+function publishFacebook(id){
+  run("studioConfessions",[TOKEN,"All"],function(d){
+    var item=null;
+    (d.rows||[]).forEach(function(r){ if(String(r.id)===String(id)) item=r; });
+    if(!item) return;
+    var text=item.confession.length>800 ? item.confession.substring(0,800)+"…" : item.confession;
+    var msg='"'+text+'"'+(item.district?" — "+item.district:"")+"\n\n(A anonymous voice shared via Laghubitta Khabar. #LaghubittaKhabar #SENNANetwork #Microfinance)";
+    openModal(
+      '<h2>&#128209; Publish to Facebook</h2>'
+      +'<p class="sub">This posts a status to your Facebook page. Edit the message if needed.</p>'
+      +'<label>Message</label>'
+      +'<textarea id="fMsg">'+escHtml(msg)+'</textarea>'
+      +'<div class="modal-actions">'
+      +'<button class="btn" id="fGo" onclick="doPublishFacebook('+id+')">Post to Facebook</button>'
+      +'<button class="btn-ghost" onclick="closeModal()">Cancel</button>'
+      +'</div>'
+      +'<div class="msg" id="fMsgBox"></div>'
+    );
+  });
+}
+function doPublishFacebook(id){
+  var msg=document.getElementById("fMsg").value.trim();
+  if(!msg){showMsg("fMsgBox","Message cannot be empty.","err");return;}
+  var btn=document.getElementById("fGo");
+  btn.disabled=true; btn.textContent="Posting...";
+  run("studioPublishFacebook",[TOKEN,id,msg],function(d){
+    btn.disabled=false; btn.textContent="Post to Facebook";
+    if(d.status==="ok"){
+      showMsg("fMsgBox",'Posted! <a href="'+escAttr(d.url)+'" target="_blank" rel="noopener">View post</a>',"ok");
+      setTimeout(closeModal,2000);
+    } else {
+      showMsg("fMsgBox",d.message||"Post failed.","err");
+    }
+  },function(){ btn.disabled=false; btn.textContent="Post to Facebook"; });
+}
+function escHtml(s){
+  return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function escAttr(s){
+  return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+}
+document.addEventListener("click",function(e){
+  if(e.target && e.target.id==="modalOverlay") closeModal();
+});
+
 /* ---------- SETTINGS ---------- */
 function loadSettings(){
   run("studioGetSettings",[TOKEN],function(d){
     if(d.status!=="ok") return;
     var s=d.settings||{};
     document.getElementById("sBlogId").value=s.blogId||"";
+    document.getElementById("sBloggerToken").value=s.bloggerToken||"";
+    document.getElementById("sBloggerRefresh").value=s.bloggerRefresh||"";
+    document.getElementById("sBloggerClientId").value=s.bloggerClientId||"";
+    document.getElementById("sBloggerClientSecret").value=s.bloggerClientSecret||"";
     document.getElementById("sFbPageId").value=s.fbPageId||"";
     document.getElementById("sFbToken").value=s.fbToken||"";
     document.getElementById("sGeminiKey").value=s.geminiKey||"";
@@ -360,6 +587,10 @@ function loadSettings(){
 function saveSettings(){
   var s={
     blogId:document.getElementById("sBlogId").value,
+    bloggerToken:document.getElementById("sBloggerToken").value,
+    bloggerRefresh:document.getElementById("sBloggerRefresh").value,
+    bloggerClientId:document.getElementById("sBloggerClientId").value,
+    bloggerClientSecret:document.getElementById("sBloggerClientSecret").value,
     fbPageId:document.getElementById("sFbPageId").value,
     fbToken:document.getElementById("sFbToken").value,
     geminiKey:document.getElementById("sGeminiKey").value,

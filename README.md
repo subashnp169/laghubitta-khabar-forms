@@ -93,7 +93,8 @@ The backend creates four sheets automatically. **Google Sheets acts as the datab
 | Timestamp | Full Name | Mobile | Email | Home District | Category | Institution | Profession | Contribution | Reason | Consent |
 
 **Confessions:**
-| Timestamp | Category | Confession | Nickname | District |
+| Timestamp | Category | Confession | Nickname | District | Status | Published |
+| | | | | | `Pending`/`Approved`/`Rejected`/`Published` | platform + URL |
 
 ## API Endpoints
 
@@ -102,7 +103,11 @@ The backend creates four sheets automatically. **Google Sheets acts as the datab
 - `GET ?action=stats&token=...` - Record counts per form
 - `GET ?action=records&form=job&limit=500&token=...` - Latest records as JSON (admin only)
 - `GET ?action=export&form=senna&token=...` - Full CSV download (admin only)
+- `GET ?action=confessions&status=Pending&token=...` - Confession queue as JSON (admin only)
 - `POST` with `{action:"import", form:"senna", token:..., rows:[[...]]}` - Bulk import rows (admin only)
+- `POST` with `{action:"setConfession", token, id, status}` - Set queue status (admin only)
+- `POST` with `{action:"publishBlogger", token, id, title, body}` - Publish to Blogger (admin only)
+- `POST` with `{action:"publishFacebook", token, id, message}` - Post to Facebook page (admin only)
 
 ## Bulk Import Format (SENNA Members)
 
@@ -114,14 +119,36 @@ Full Name, Mobile, Email, Home District, Category, Institution, Profession, Cont
 
 Blank `Category` defaults to **Microfinance**. Recommended batch size: 5,000 rows per import.
 
+## Step 2 — Confessions Queue & Publish (how to use)
+
+Flow: public Confession form submits → sheet row with status `Pending` → Studio **Confessions Queue** → review → publish.
+
+1. In the Studio, open **Confessions Queue**. New submissions appear under **Pending**.
+2. **Approve** a confession to unlock the publish buttons (Reject hides it from the queue; Restore brings it back).
+3. **Publish to Blogger** — edit the auto-generated title/body, then click Publish. The blog post URL is saved back to the sheet.
+4. **Publish to Facebook** — edit the pre-filled message, then click Post. The post URL is saved back to the sheet.
+5. Once published, the row's Status becomes `Published` and the links column stores where it went.
+
+**Blogger setup (required for Blogger publishing):**
+1. Create the blog at blogger.com and note its Blog ID (Settings → Basic → Blog ID, or from the blog URL).
+2. Get an access token: open [Google OAuth Playground](https://developers.google.com/oauthplayground/), click the gear (OAuth 2.0 configuration), check "Use your own OAuth credentials" only if you have a Google Cloud client — otherwise use the default playground client and click **Authorize APIs**.
+3. In "Select & authorize APIs" enter scope: `https://www.googleapis.com/auth/blogger` → Authorize → Exchange authorization code for tokens.
+4. Copy the **Access token** into Studio → Settings → **Blogger Access Token**, and the Blog ID into **Blogger Blog ID**.
+5. (Optional, for auto-refresh) also copy the **Refresh token** from the same screen, plus your Google Cloud OAuth **Client ID/Secret** (OAuth consent screen → client type *Web application*, redirect URI `https://developers.google.com/oauthplayground`). Note: the default playground client's refresh token only lasts 7 days; your own client is permanent.
+
+**Facebook setup (required for Facebook publishing):**
+1. Get your page ID: open the page → About → find the page ID (or from the page URL `/pages/<Name>/<ID>`).
+2. Create a Facebook App (developers.facebook.com → Create App), add the *pages_manage_posts* and *publish_pages* permissions, and generate a **long-lived page access token** (System User or the app's access token exchange — see Facebook's "Long-lived Page Access Token" guide).
+3. Paste the Page ID and the token into Studio → Settings.
+
 ## Roadmap (step by step)
 
 - **Step 1 (done):** Forms portal (4 forms) + Google Sheet database + Admin Studio UI
-- **Step 2:** Confessions review & publish queue (Blogger + Facebook) + staff field reports
+- **Step 2 (done):** Confessions review & publish queue (Blogger + Facebook)
 - **Step 3:** Content Studio (Gemini AI article generation + manual publish)
 - **Step 4:** Full Laghubitta Khabar platform redesign
 
-The Studio's **Settings** tab already stores `BLOG_ID`, `FB_PAGE_ID`, `FB_TOKEN`, `GEMINI_API_KEY`, and `FOLDER_ID` in Script Properties, ready for Steps 2-3.
+The Studio's **Settings** tab stores `BLOG_ID`, `BLOGGER_TOKEN` (+ refresh token / client id / client secret), `FB_PAGE_ID`, `FB_TOKEN`, `GEMINI_API_KEY`, and `FOLDER_ID` in Script Properties, ready for Steps 2-3.
 
 ## Project Files
 
