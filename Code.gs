@@ -39,6 +39,14 @@ function doPost(e) {
 function doGet(e) {
   const action = e.parameter.action;
 
+  // No action -> serve the Admin Studio UI (must NOT require auth to load the login screen)
+  if (!action) {
+    return HtmlService.createHtmlOutputFromFile('Index')
+      .setTitle('Laghubitta Khabar — Admin Studio')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+
   if (action === "login") {
     const stored = getAdminPass_();
     const pass = e.parameter.pass || "";
@@ -47,7 +55,7 @@ function doGet(e) {
   }
 
   const token = e.parameter.token || "";
-  if (token !== makeToken_(getAdminPass_())) return error_("Unauthorized");
+  if (!getAdminPass_() || token !== makeToken_(getAdminPass_())) return error_("Unauthorized");
 
   if (action === "stats") return json_(getStats_());
   if (action === "records") {
@@ -63,11 +71,7 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.TEXT);
   }
 
-  // No recognized API action -> serve the Admin Studio UI (HtmlService)
-  return HtmlService.createHtmlOutputFromFile('Index')
-    .setTitle('Laghubitta Khabar — Admin Studio')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  return error_("Unknown action");
 }
 
 function submitRow_(form, data) {
@@ -231,7 +235,7 @@ function studioLogin(pass) {
 }
 
 function authOk_(token) {
-  return !!token && token === makeToken_(getAdminPass_());
+  return !!getAdminPass_() && !!token && token === makeToken_(getAdminPass_());
 }
 
 function studioStats(token) {

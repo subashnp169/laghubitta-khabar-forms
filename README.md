@@ -11,8 +11,13 @@ Single-page bilingual (English + Nepali) portal with **3 forms** for the Laghubi
 ## Architecture
 
 ```
-QR code -> GitHub Pages (index.html) -> fetch(POST) -> Google Apps Script Web App -> Google Sheets
+QR code -> Cloudflare Pages (index.html) -> fetch(POST) -> Google Apps Script Web App -> Google Sheets
 ```
+
+Live URLs:
+- Portal: `https://laghubitta-khabar-forms.pages.dev`
+- Admin Studio: your Apps Script Web App URL (no query string)
+- Backup mirror: `https://subashnp169.github.io/laghubitta-khabar-forms/`
 
 ## Setup
 
@@ -24,13 +29,13 @@ QR code -> GitHub Pages (index.html) -> fetch(POST) -> Google Apps Script Web Ap
 4. Deploy -> New deployment -> Web app
    - Execute as: Me
    - Who has access: Anyone
-5. Copy the Web App URL (ends in `/exec`)
+5. Copy the Web App URL (ends in `/exec`) and set it as `SCRIPT_URL` in `index.html`
 
 ### 2. Connect Frontend
 
 1. Open `index.html`
-2. Find `var SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";`
-3. Replace with your Web App URL
+2. Find `var SCRIPT_URL = "...";`
+3. Replace with your Web App URL (already done for the current deployment)
 
 ### 3. Set Admin Password (Authorization)
 
@@ -46,16 +51,32 @@ QR code -> GitHub Pages (index.html) -> fetch(POST) -> Google Apps Script Web Ap
 3. Delete the default content and paste the contents of `studio.html`
 4. Save. Visiting your **Web App URL** (with no query string) now opens the **Admin Studio** — password-protected dashboard with Records, Bulk Import, and Settings tabs
 
-### 4. Deploy to GitHub
+### 4. Deploy to Cloudflare Pages (primary)
 
-1. Push this folder to a GitHub repo
-2. Go to Settings -> Pages -> Source: deploy from branch -> `gh-pages` (root `/`)
-3. Your portal will be live at `https://<username>.github.io/<repo>/`
+1. Put `index.html` + `logo.webp` in a folder (e.g. `cloudflare-dist`)
+2. Deploy with wrangler (already authenticated):
+   ```
+   npx wrangler pages deploy cloudflare-dist --project-name=laghubitta-khabar-forms
+   ```
+3. Live at `https://laghubitta-khabar-forms.pages.dev`
 
-### 4. Generate QR Code
+### 5. Custom Domain (Cloudflare)
+
+1. In the Cloudflare dashboard: **Workers & Pages -> laghubitta-khabar-forms -> Custom domains**
+2. Click **Set up a custom domain** and enter your domain (e.g. `forms.laghubittakhabar.com`)
+3. If your domain is already on Cloudflare, DNS is added automatically.
+4. If it is not on Cloudflare yet: add your domain to Cloudflare first, then repeat step 2 (a `CNAME laghubitta-khabar-forms.pages.dev` record is created for you).
+
+### 6. Backup Mirror (GitHub Pages)
+
+1. Push to the GitHub repo
+2. Settings -> Pages -> Source: `gh-pages` branch (root `/`)
+3. Backup at `https://subashnp169.github.io/laghubitta-khabar-forms/`
+
+### 7. Generate QR Code
 
 ```
-https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=https://<username>.github.io/<repo>/
+https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=https://laghubitta-khabar-forms.pages.dev/
 ```
 
 ## Google Sheets Structure
