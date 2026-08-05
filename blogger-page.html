@@ -93,7 +93,9 @@ table.ad-table{width:100%;border-collapse:collapse;font-size:11px}
 .ad-table tr:nth-child(even){background:#fafaf8}
 .ad-empty{text-align:center;color:#999;padding:24px;font-size:12px}
 @media(max-width:480px){.portal-grid{grid-template-columns:1fr;max-width:320px}.hero h1{font-size:18px}.ad-stats{grid-template-columns:repeat(2,1fr)}}
-</style>
+.entry-content .lk-portal img{width:auto!important;margin:0!important;box-shadow:none!important;border-radius:0!important}
+.entry-content .lk-portal .logo-img{width:112px!important;margin:0 auto 16px!important}
+.entry-content .lk-portal .mini-logo{width:18px!important;margin:0 6px 0 0!important}</style>
 
 
 <!-- ==================== HOME ==================== -->
@@ -137,7 +139,7 @@ table.ad-table{width:100%;border-collapse:collapse;font-size:11px}
   </div>
   <div class="home-footer">
     Independent public welfare platform &middot; लघुवित्त खबर<br>
-    <a href="https://laghubittakhabar.blogspot.com/">laghubittakhabar.pages.dev</a><br>
+    <a href="https://laghubittakhabar.blogspot.com/">Back to Blog</a><br>
     <a href="#" class="admin-link" onclick="openPortal('admin');return false;">Admin Login</a>
   </div>
 </div>
@@ -810,4 +812,38 @@ function esc(s){
 if(ADMIN_TOKEN){showAdminDash();}
 </script>
 
-</div>
+<script>
+window.addEventListener("load",function(){
+  var portal=document.querySelector(".lk-portal");
+  if(!portal)return;
+  var entry=portal.closest(".entry-content");
+  var article=portal.closest("article");
+  if(article){
+    var kids=article.children;
+    for(var i=kids.length-1;i>=0;i--){
+      var c=kids[i];
+      if(c.tagName && c.tagName.toLowerCase()==="img") c.remove();
+    }
+  }
+  if(entry){
+    var container=entry.parentElement;
+    if(container){
+      var k2=container.children;
+      for(var j=k2.length-1;j>=0;j--){
+        if(k2[j]!==entry) k2[j].remove();
+      }
+      container.style.padding="0";
+    }
+    if(article){
+      article.style.padding="0";
+      article.style.background="transparent";
+      article.style.border="none";
+      article.style.boxShadow="none";
+      article.style.borderRadius="0";
+      article.style.overflow="visible";
+    }
+  }
+  var pop=document.querySelector(".widget.PopularPosts");
+  if(pop) pop.remove();
+});
+</script></div>
