@@ -125,7 +125,7 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
     <button class="nav-item" id="nav-confess" onclick="nav('confess')">&#129302; <span class="txt">Confessions Queue</span></button>
     <button class="nav-item" id="nav-settings" onclick="nav('settings')">&#9881; <span class="txt">Settings</span></button>
     <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px"></div>
-    <button class="nav-item locked" title="Step 3"><span class="txt">&#9997; Content Studio</span><span class="tag">Step 3</span></button>
+    <button class="nav-item" id="nav-content" onclick="nav('content')">&#9997; <span class="txt">Content Studio</span></button>
     <button class="nav-item locked" title="Step 4"><span class="txt">&#127760; Platform Redesign</span><span class="tag">Step 4</span></button>
     <div class="foot">Laghubitta Khabar<br>SENNA Network Initiative</div>
   </div>
@@ -142,8 +142,9 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
           <b>Records</b> — view the latest submissions per form, export CSV.<br>
           <b>Bulk Import</b> — paste SENNA members as CSV (ideal for your 1.12 lakh list, ~5,000 rows per batch).<br>
           <b>Confessions Queue</b> — review anonymous confessions and publish them to Blogger / Facebook.<br>
-          <b>Settings</b> — keys for Blogger + Facebook publishing (Step 2).<br>
-          <b>Coming next:</b> Content Studio (Step 3), Platform redesign (Step 4).
+          <b>Content Studio</b> — generate AI article drafts (Gemini), edit, then manually publish to Blogger / Facebook.<br>
+          <b>Settings</b> — Blogger + Facebook + Gemini keys (Step 2/3).<br>
+          <b>Coming next:</b> Platform redesign (Step 4).
         </div>
       </div>
     </div>
@@ -190,6 +191,88 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
       <div id="confList"><div class="empty">Loading...</div></div>
     </div>
 
+    <!-- CONTENT STUDIO -->
+    <div class="page" id="page-content">
+      <h1>Content Studio</h1>
+      <p class="sub">AI article drafting (Gemini) with manual review before publishing to Blogger / Facebook</p>
+
+      <div class="card">
+        <h2>Generate draft with Gemini</h2>
+        <div class="set-row">
+          <div class="lbl">Topic</div>
+          <input type="text" id="cTopic" placeholder="e.g. नेपालको लघुवित्त क्षेत्रमा सुधारका उपाय">
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px">
+          <div class="set-row">
+            <div class="lbl">Language</div>
+            <select id="cLang">
+              <option>Nepali</option>
+              <option>English</option>
+              <option>हिन्दी</option>
+            </select>
+          </div>
+          <div class="set-row">
+            <div class="lbl">Type</div>
+            <select id="cType">
+              <option>Article</option>
+              <option>News</option>
+              <option>Analysis</option>
+              <option>Feature</option>
+            </select>
+          </div>
+          <div class="set-row">
+            <div class="lbl">Length</div>
+            <select id="cWords">
+              <option value="200">Short (~200)</option>
+              <option value="400" selected>Medium (~400)</option>
+              <option value="700">Long (~700)</option>
+            </select>
+          </div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Keywords <span style="font-weight:400">(optional)</span></div>
+          <input type="text" id="cKeywords" placeholder="microfinance, NBFC, inclusion">
+        </div>
+        <button class="btn" id="genBtn" onclick="genDraft()">Generate Draft</button>
+        <div class="msg" id="genMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2>Draft editor</h2>
+        <input type="hidden" id="aId" value="">
+        <div class="set-row">
+          <div class="lbl">Title</div>
+          <input type="text" id="aTitle" placeholder="Article title">
+        </div>
+        <div class="set-row">
+          <div class="lbl">Labels <span style="font-weight:400">(comma separated)</span></div>
+          <input type="text" id="aLabels" placeholder="Microfinance, Nepal">
+        </div>
+        <div class="set-row">
+          <div class="lbl">Source Link <span style="font-weight:400">(optional)</span></div>
+          <input type="text" id="aSource" placeholder="https://...">
+        </div>
+        <div class="set-row">
+          <div class="lbl">Body (HTML)</div>
+          <textarea id="aBody" style="min-height:220px" placeholder="&lt;p&gt;Write your article…&lt;/p&gt;"></textarea>
+        </div>
+        <div class="tools" style="margin-bottom:0">
+          <button class="btn" id="saveBtn" onclick="saveArticle()">Save Draft</button>
+          <button class="btn" id="pubB" style="background:linear-gradient(135deg,#1e7a3d,#2a9d5a)" onclick="pubArticleBlogger()">Publish to Blogger</button>
+          <button class="btn" id="pubF" style="background:linear-gradient(135deg,#1a4a8a,#2a6ab0)" onclick="pubArticleFacebook()">Publish to Facebook</button>
+        </div>
+        <div class="msg" id="artMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2>Article list</h2>
+        <div class="tools">
+          <button class="btn-ghost" onclick="loadArticles()">&#8635; Refresh</button>
+        </div>
+        <div id="artList"><div class="empty">Loading...</div></div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <h1>Settings</h1>
@@ -233,7 +316,12 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
         <div class="set-row">
           <div class="lbl">Gemini API Key</div>
           <input type="password" id="sGeminiKey" placeholder="AIza...">
-          <div class="hlp">Step 3 — AI content engine. Leave blank to keep the current value</div>
+          <div class="hlp">Step 3 — AI content engine. Get a free key at aistudio.google.com/apikey. Leave blank to keep the current value</div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Gemini Model</div>
+          <input type="text" id="sGeminiModel" placeholder="gemini-2.5-flash">
+          <div class="hlp">Step 3 — AI model for drafts. Default: gemini-2.5-flash</div>
         </div>
         <div class="set-row">
           <div class="lbl">Google Drive Folder ID (field photos)</div>
@@ -247,7 +335,7 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
         <b>Step-by-step roadmap:</b><br>
         &#10003; Step 1 — Portal + Admin Studio (done)<br>
         &#10003; Step 2 — Confessions review &amp; publish queue (done)<br>
-        &#9679; Step 3 — Content Studio (Gemini articles + manual publish)<br>
+        &#10003; Step 3 — Content Studio (Gemini articles + manual publish) (done)<br>
         &#9679; Step 4 — Full Laghubitta Khabar platform redesign
       </div>
     </div>
@@ -303,7 +391,9 @@ function doLogin(){
 }
 
 /* ---------- NAV ---------- */
+var CUR_PAGE = "dash";
 function nav(name){
+  CUR_PAGE=name;
   document.querySelectorAll(".nav-item").forEach(function(b){b.classList.remove("on");});
   document.querySelectorAll(".page").forEach(function(p){p.classList.remove("on");});
   document.getElementById("nav-"+name).classList.add("on");
@@ -311,6 +401,7 @@ function nav(name){
   if(name==="dash") loadStats();
   if(name==="records") loadRecords();
   if(name==="confess") loadConfessions();
+  if(name==="content") loadArticles();
   if(name==="settings") loadSettings();
 }
 
@@ -330,6 +421,7 @@ function loadStats(){
     FORMS.forEach(function(f){
       html+='<div class="stat '+colors[f.key]+'"><b>'+Number(d.stats[f.key]||0).toLocaleString()+'</b><span>'+esc(f.label)+"</span></div>";
     });
+    html+='<div class="stat green"><b>'+Number(d.stats.articles||0).toLocaleString()+'</b><span>Articles (Studio)</span></div>';
     document.getElementById("statCards").innerHTML=html;
   });
 }
@@ -482,7 +574,8 @@ function openModal(html){
 }
 function closeModal(){
   document.getElementById("modalOverlay").style.display="none";
-  loadConfessions();
+  if(CUR_PAGE==="confess") loadConfessions();
+  if(CUR_PAGE==="content") loadArticles();
 }
 function publishBlogger(id){
   var title="Anonymous Confession — A Voice from the MFI Sector";
@@ -568,6 +661,201 @@ document.addEventListener("click",function(e){
   if(e.target && e.target.id==="modalOverlay") closeModal();
 });
 
+/* ---------- CONTENT STUDIO ---------- */
+var CUR_ARTICLE = null;
+
+function genDraft(){
+  var topic=document.getElementById("cTopic").value.trim();
+  if(!topic){showMsg("genMsg","Enter a topic first.","err");return;}
+  var opts={
+    topic:topic,
+    language:document.getElementById("cLang").value,
+    type:document.getElementById("cType").value,
+    words:document.getElementById("cWords").value,
+    keywords:document.getElementById("cKeywords").value.trim()
+  };
+  var btn=document.getElementById("genBtn");
+  btn.disabled=true; btn.textContent="Generating (10-30s)...";
+  showMsg("genMsg","","");
+  run("studioGenArticle",[TOKEN,opts],function(d){
+    btn.disabled=false; btn.textContent="Generate Draft";
+    if(d.status!=="ok"){ showMsg("genMsg",d.message||"Generation failed.","err"); return; }
+    fillArticleEditor(null,d.draft);
+    showMsg("genMsg","Draft generated — review and edit before publishing.","ok");
+  },function(){ btn.disabled=false; btn.textContent="Generate Draft"; });
+}
+
+function fillArticleEditor(id,art){
+  document.getElementById("aId").value = id==null ? "" : id;
+  document.getElementById("aTitle").value = art.title || "";
+  document.getElementById("aLabels").value = (art.labels||[]).join(", ");
+  document.getElementById("aSource").value = art.sourceLink || "";
+  document.getElementById("aBody").value = art.body || "";
+  CUR_ARTICLE = id==null ? null : Number(id);
+}
+
+function saveArticle(){
+  var title=document.getElementById("aTitle").value.trim();
+  var body=document.getElementById("aBody").value;
+  if(!title){showMsg("artMsg","Title is required.","err");return;}
+  if(!body){showMsg("artMsg","Body is required.","err");return;}
+  var article={
+    title:title,
+    labels:document.getElementById("aLabels").value,
+    sourceLink:document.getElementById("aSource").value.trim(),
+    body:body
+  };
+  var btn=document.getElementById("saveBtn");
+  btn.disabled=true;
+  run("studioSaveArticle",[TOKEN,article],function(d){
+    btn.disabled=false;
+    if(d.status==="ok"){
+      showMsg("artMsg","Draft saved (id "+d.id+").","ok");
+      document.getElementById("aId").value=d.id;
+      CUR_ARTICLE=d.id;
+      loadArticles();
+    } else {
+      showMsg("artMsg",d.message||"Save failed.","err");
+    }
+  },function(){ btn.disabled=false; });
+}
+
+function loadArticles(){
+  var box=document.getElementById("artList");
+  box.innerHTML='<div class="empty">Loading...</div>';
+  run("studioListArticles",[TOKEN],function(d){
+    if(d.status!=="ok"){ box.innerHTML='<div class="empty">'+esc(d.message)+"</div>"; return; }
+    var rows=d.rows||[];
+    if(!rows.length){ box.innerHTML='<div class="empty">No articles yet. Generate one above.</div>'; return; }
+    var html="";
+    rows.forEach(function(a){
+      var st="st-"+a.status.toLowerCase();
+      var links="";
+      if(a.bloggerUrl) links+=' <a href="'+escAttr(a.bloggerUrl)+'" target="_blank" rel="noopener" style="color:var(--navy-2)">Blogger</a>';
+      if(a.facebookUrl) links+=' <a href="'+escAttr(a.facebookUrl)+'" target="_blank" rel="noopener" style="color:var(--navy-2)">Facebook</a>';
+      html+='<div class="conf-card">'
+        +'<div class="conf-top">'
+        +'<span class="conf-status '+st+'">'+esc(a.status)+"</span>"
+        +'<span style="font-size:11px;color:var(--muted)">'+esc(a.timestamp)+"</span>"
+        +'</div>'
+        +'<div class="conf-text">'+esc(a.title)+"</div>"
+        +'<div class="conf-meta">'+links+"</div>"
+        +'<div class="conf-actions">'
+        +'<button class="btn-ghost" onclick="editArticle('+a.id+')">&#9998; Edit</button>'
+        +'<button class="btn-ghost ok" onclick="loadArticleToPublish('+a.id+')">&#128278; Publish</button>'
+        +'</div>'
+        +'</div>';
+    });
+    box.innerHTML=html;
+  });
+}
+
+function editArticle(id){
+  run("studioGetArticle",[TOKEN,id],function(d){
+    if(d.status!=="ok"){ alert(d.message||"Load failed"); return; }
+    var a=d.article;
+    fillArticleEditor(a.id,{title:a.title,labels:[a.labels],sourceLink:a.sourceLink,body:a.body});
+    showMsg("artMsg","Loaded draft #"+a.id+" — edit then Save or Publish.","ok");
+  });
+}
+
+function loadArticleToPublish(id){
+  run("studioGetArticle",[TOKEN,id],function(d){
+    if(d.status!=="ok"){ alert(d.message||"Load failed"); return; }
+    var a=d.article;
+    fillArticleEditor(a.id,{title:a.title,labels:[a.labels],sourceLink:a.sourceLink,body:a.body});
+    pubArticleBlogger();
+  });
+}
+
+function pubArticleBlogger(){
+  var id=CUR_ARTICLE;
+  if(id==null){ showMsg("artMsg","Save or load an article first.","err"); return; }
+  var title=document.getElementById("aTitle").value.trim() || "Laghubitta Khabar Article";
+  var body=document.getElementById("aBody").value;
+  var labels=document.getElementById("aLabels").value;
+  var src=document.getElementById("aSource").value.trim();
+  openModal(
+    '<h2>&#128278; Publish Article to Blogger</h2>'
+    +'<p class="sub">Creates a new blog post (labels + source link included). Review before publishing.</p>'
+    +'<label>Title</label>'
+    +'<input type="text" id="abTitle" value="'+escAttr(title)+'">'
+    +'<label>Labels (comma separated)</label>'
+    +'<input type="text" id="abLabels" value="'+escAttr(labels)+'">'
+    +'<label>Source Link (optional)</label>'
+    +'<input type="text" id="abSource" value="'+escAttr(src)+'">'
+    +'<label>Body (HTML)</label>'
+    +'<textarea id="abBody" style="min-height:220px">'+escHtml(body)+'</textarea>'
+    +'<div class="modal-actions">'
+    +'<button class="btn" id="abGo" onclick="doPubArticleBlogger('+id+')">Publish Now</button>'
+    +'<button class="btn-ghost" onclick="closeModal()">Cancel</button>'
+    +'</div>'
+    +'<div class="msg" id="abMsg"></div>'
+  );
+}
+function doPubArticleBlogger(id){
+  var title=document.getElementById("abTitle").value.trim();
+  var body=document.getElementById("abBody").value;
+  var labels=document.getElementById("abLabels").value;
+  var src=document.getElementById("abSource").value.trim();
+  if(!title){showMsg("abMsg","Enter a title.","err");return;}
+  if(!body){showMsg("abMsg","Body is required.","err");return;}
+  var btn=document.getElementById("abGo");
+  btn.disabled=true; btn.textContent="Publishing...";
+  run("studioPublishArticleBlogger",[TOKEN,id,title,body,labels,src],function(d){
+    btn.disabled=false; btn.textContent="Publish Now";
+    if(d.status==="ok"){
+      showMsg("abMsg",'Published! <a href="'+escAttr(d.url)+'" target="_blank" rel="noopener">Open post</a>',"ok");
+      setTimeout(closeModal,2000);
+    } else {
+      showMsg("abMsg",d.message||"Publish failed.","err");
+    }
+  },function(){ btn.disabled=false; btn.textContent="Publish Now"; });
+}
+
+function pubArticleFacebook(){
+  var id=CUR_ARTICLE;
+  if(id==null){ showMsg("artMsg","Save or load an article first.","err"); return; }
+  var title=document.getElementById("aTitle").value.trim();
+  var body=document.getElementById("aBody").value;
+  var text=htmlToText(body).substring(0,600);
+  var msg=(title?title+"\n\n":"")+text+"\n\n#LaghubittaKhabar #SENNANetwork #Microfinance";
+  openModal(
+    '<h2>&#128209; Publish Article to Facebook</h2>'
+    +'<p class="sub">Posts a status to your Facebook page. The article link is attached automatically.</p>'
+    +'<label>Message</label>'
+    +'<textarea id="afMsg" style="min-height:180px">'+escHtml(msg)+'</textarea>'
+    +'<div class="modal-actions">'
+    +'<button class="btn" id="afGo" onclick="doPubArticleFacebook('+id+')">Post to Facebook</button>'
+    +'<button class="btn-ghost" onclick="closeModal()">Cancel</button>'
+    +'</div>'
+    +'<div class="msg" id="afMsg"></div>'
+  );
+}
+function doPubArticleFacebook(id){
+  var msg=document.getElementById("afMsg").value.trim();
+  if(!msg){showMsg("afMsg","Message cannot be empty.","err");return;}
+  var link=document.getElementById("aSource").value.trim() || null;
+  var btn=document.getElementById("afGo");
+  btn.disabled=true; btn.textContent="Posting...";
+  run("studioPublishArticleFacebook",[TOKEN,id,msg,link],function(d){
+    btn.disabled=false; btn.textContent="Post to Facebook";
+    if(d.status==="ok"){
+      showMsg("afMsg",'Posted! <a href="'+escAttr(d.url)+'" target="_blank" rel="noopener">View post</a>',"ok");
+      setTimeout(closeModal,2000);
+    } else {
+      showMsg("afMsg",d.message||"Post failed.","err");
+    }
+  },function(){ btn.disabled=false; btn.textContent="Post to Facebook"; });
+}
+
+function htmlToText(h){
+  var t=String(h==null?"":h)
+    .replace(/<[^>]+>/g," ")
+    .replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+  return t.replace(/\s+/g," ").trim();
+}
+
 /* ---------- SETTINGS ---------- */
 function loadSettings(){
   run("studioGetSettings",[TOKEN],function(d){
@@ -581,6 +869,7 @@ function loadSettings(){
     document.getElementById("sFbPageId").value=s.fbPageId||"";
     document.getElementById("sFbToken").value=s.fbToken||"";
     document.getElementById("sGeminiKey").value=s.geminiKey||"";
+    document.getElementById("sGeminiModel").value=s.geminiModel||"gemini-2.5-flash";
     document.getElementById("sFolderId").value=s.folderId||"";
   });
 }
@@ -594,6 +883,7 @@ function saveSettings(){
     fbPageId:document.getElementById("sFbPageId").value,
     fbToken:document.getElementById("sFbToken").value,
     geminiKey:document.getElementById("sGeminiKey").value,
+    geminiModel:document.getElementById("sGeminiModel").value,
     folderId:document.getElementById("sFolderId").value
   };
   var btn=document.getElementById("settingsBtn");

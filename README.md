@@ -96,6 +96,10 @@ The backend creates four sheets automatically. **Google Sheets acts as the datab
 | Timestamp | Category | Confession | Nickname | District | Status | Published |
 | | | | | | `Pending`/`Approved`/`Rejected`/`Published` | platform + URL |
 
+**Articles** (created by Content Studio):
+| Timestamp | Title | Labels | Status | Source Link | Body HTML | Blogger URL | Facebook URL |
+| | | comma-separated tags | `Draft`/`Published` | optional source URL | article HTML | published post URL | published post URL |
+
 ## API Endpoints
 
 - `POST` - Submit a form (`form: "job" | "help" | "senna" | "confession"` in the JSON body)
@@ -141,6 +145,20 @@ Flow: public Confession form submits → sheet row with status `Pending` → Stu
 2. Create a Facebook App (developers.facebook.com → Create App), add the *pages_manage_posts* and *publish_pages* permissions, and generate a **long-lived page access token** (System User or the app's access token exchange — see Facebook's "Long-lived Page Access Token" guide).
 3. Paste the Page ID and the token into Studio → Settings.
 
+## Step 3 — Content Studio (Gemini AI articles)
+
+Flow: enter a topic in the Studio → Gemini drafts the article (title + labels + HTML body) → you review/edit → save as a draft → manually publish to Blogger / Facebook.
+
+1. Open the Studio → **Content Studio**.
+2. In **Settings**, paste a free Gemini API key into **Gemini API Key** (get it at `https://aistudio.google.com/apikey`). The **Gemini Model** field defaults to `gemini-2.5-flash`.
+3. Enter a **Topic** (Nepali or English), choose Language / Type / Length, optionally add keywords, then **Generate Draft** (takes 10–30 s).
+4. The draft loads into the **Draft editor**. Edit the title, labels, source link and HTML body, then **Save Draft**.
+5. **Publish to Blogger** — opens a modal with editable title/labels/body; the source link is appended to the post. The post URL is saved back to the sheet.
+6. **Publish to Facebook** — opens a modal with a text summary; the source link is attached to the post automatically. The post URL is saved back to the sheet.
+7. Published articles show a `Published` status and their platform links in the **Article list**.
+
+Requirements: Blogger Blog ID + Blogger Access Token (Step 2) and/or Facebook Page ID + Page Access Token (Step 2) are reused for article publishing. Publishing is always manual — no unattended auto-posting.
+
 ## Blogger Embed (optional — "genuine" blogspot home)
 
 `blogger-page.html` is the whole forms portal packaged to paste into a **Blogger Page**:
@@ -160,10 +178,10 @@ Notes:
 
 - **Step 1 (done):** Forms portal (4 forms) + Google Sheet database + Admin Studio UI
 - **Step 2 (done):** Confessions review & publish queue (Blogger + Facebook)
-- **Step 3:** Content Studio (Gemini AI article generation + manual publish)
+- **Step 3 (done):** Content Studio (Gemini AI article generation + manual publish)
 - **Step 4:** Full Laghubitta Khabar platform redesign
 
-The Studio's **Settings** tab stores `BLOG_ID`, `BLOGGER_TOKEN` (+ refresh token / client id / client secret), `FB_PAGE_ID`, `FB_TOKEN`, `GEMINI_API_KEY`, and `FOLDER_ID` in Script Properties, ready for Steps 2-3.
+The Studio's **Settings** tab stores `BLOG_ID`, `BLOGGER_TOKEN` (+ refresh token / client id / client secret), `FB_PAGE_ID`, `FB_TOKEN`, `GEMINI_API_KEY`, `GEMINI_MODEL`, and `FOLDER_ID` in Script Properties, ready for Steps 2-4.
 
 ## Project Files
 

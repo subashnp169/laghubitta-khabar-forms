@@ -14,10 +14,13 @@ const SHEETS = {
   job: { name: "JobCareer", headers: ["Timestamp","Full Name","Mobile","Email","Academic Qualification","Experience","Current Status","Home District","Preferred Province","Preferred City","Desired Sector","Help Needed","Notes"] },
   help: { name: "ClientHelp", headers: ["Timestamp","Name","Mobile","Home District","Institution Name","Institution Type","Issue Type","Issue Description","Preferred Contact Time","Contact Method"] },
   senna: { name: "SennaNetwork", headers: ["Timestamp","Full Name","Mobile","Email","Home District","Category","Institution","Profession","Contribution","Reason","Consent"] },
-  confession: { name: "Confessions", headers: ["Timestamp","Category","Confession","Nickname","District","Status","Published"] }
+  confession: { name: "Confessions", headers: ["Timestamp","Category","Confession","Nickname","District","Status","Published"] },
+  articles: { name: "Articles", headers: ["Timestamp","Title","Labels","Status","Source Link","Body HTML","Blogger URL","Facebook URL"] }
 };
 
 const SALT = "lk-senna-network-2026";
+
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 function doPost(e) {
   try {
@@ -298,6 +301,7 @@ function studioSaveSettings(token, s) {
   if (s.bloggerClientId !== undefined) p.setProperty("BLOGGER_CLIENT_ID", (s.bloggerClientId || "").trim());
   if (s.bloggerClientSecret !== undefined) p.setProperty("BLOGGER_CLIENT_SECRET", (s.bloggerClientSecret || "").trim());
   if (s.geminiKey !== undefined) p.setProperty("GEMINI_API_KEY", (s.geminiKey || "").trim());
+  if (s.geminiModel !== undefined) p.setProperty("GEMINI_MODEL", (s.geminiModel || "").trim());
   if (s.folderId !== undefined) p.setProperty("FOLDER_ID", (s.folderId || "").trim());
   return { status: "ok", message: "Settings saved." };
 }
@@ -314,6 +318,7 @@ function getSettingsMasked_() {
     bloggerClientId: p.getProperty("BLOGGER_CLIENT_ID") || "",
     bloggerClientSecret: mask(p.getProperty("BLOGGER_CLIENT_SECRET")),
     geminiKey: mask(p.getProperty("GEMINI_API_KEY")),
+    geminiModel: p.getProperty("GEMINI_MODEL") || "",
     folderId: p.getProperty("FOLDER_ID") || ""
   };
 }
@@ -402,7 +407,7 @@ function markConfessionPublished_(id, note) {
   sheet.getRange(row, idx["Status"] + 1, 1, 2).setValues([["Published", combined]]);
 }
 
-function publishBlogger_(id, title, body) {
+function postToBlogger_(title, body, labels, sourceLink) {
   const p = PropertiesService.getScriptProperties();
   const blogId = p.getProperty("BLOG_ID") || "";
   if (!blogId) throw new Error("Blogger Blog ID is not set (Studio > Settings)");
@@ -410,13 +415,20 @@ function publishBlogger_(id, title, body) {
   const token = getBloggerToken_();
   if (!token) throw new Error("Blogger access token is not set (Studio > Settings)");
 
+  let content = String(body || "");
+  if (sourceLink && content.indexOf(sourceLink) === -1) {
+    content += '<p style="font-size:12px;color:#666"><i>Source: <a href="' + sourceLink + '" target="_blank" rel="noopener">' + sourceLink + '</a></i></p>';
+  }
+  const post = { title: title, content: content, published: new Date().toISOString() };
+  if (labels && labels.length) post.labels = labels;
+
   const res = UrlFetchApp.fetch(
     "https://www.googleapis.com/blogger/v3/blogs/" + encodeURIComponent(blogId) + "/posts/",
     {
       method: "post",
       contentType: "application/json",
       headers: { Authorization: "Bearer " + token },
-      payload: JSON.stringify({ title: title, content: body || "" }),
+      payload: JSON.stringify(post),
       muteHttpExceptions: true
     }
   );
@@ -428,6 +440,10 @@ function publishBlogger_(id, title, body) {
   }
   if (code !== 200) throw new Error("Blogger error " + code + ": " + txt);
   return JSON.parse(txt).url;
+}
+
+function publishBlogger_(id, title, body) {
+  return postToBlogger_(title, body, [], null);
 }
 
 function getBloggerToken_() {
@@ -457,7 +473,7 @@ function getBloggerToken_() {
   return token;
 }
 
-function publishFacebook_(id, message) {
+function postToFacebook_(message, link) {
   const p = PropertiesService.getScriptProperties();
   const pageId = p.getProperty("FB_PAGE_ID") || "";
   const token = p.getProperty("FB_TOKEN") || "";
@@ -465,11 +481,14 @@ function publishFacebook_(id, message) {
   if (!token) throw new Error("Facebook Page Access Token is not set (Studio > Settings)");
   if (!message) throw new Error("Message is required");
 
+  const payload = { message: message, access_token: token };
+  if (link) payload.link = link;
+
   const res = UrlFetchApp.fetch(
     "https://graph.facebook.com/v20.0/" + encodeURIComponent(pageId) + "/feed",
     {
       method: "post",
-      payload: { message: message, access_token: token },
+      payload: payload,
       muteHttpExceptions: true
     }
   );
@@ -477,6 +496,10 @@ function publishFacebook_(id, message) {
   const txt = res.getContentText();
   if (code !== 200) throw new Error("Facebook error " + code + ": " + txt);
   return "https://www.facebook.com/" + pageId + "/posts/" + JSON.parse(txt).id;
+}
+
+function publishFacebook_(id, message) {
+  return postToFacebook_(message, null);
 }
 
 function fmtDate_(v) {
@@ -554,6 +577,335 @@ function studioPublishFacebook(token, id, message) {
   try {
     const url = publishFacebook_(id, message);
     markConfessionPublished_(id, "Facebook: " + url);
+    return { status: "ok", url: url };
+  } catch (err) {
+    return { status: "error", message: err.message };
+  }
+}
+
+// ── STEP 3: CONTENT STUDIO (Gemini AI articles) ─────────────────
+// Articles sheet holds drafts + published articles. Publishing is always manual.
+
+function ensureSheetColumns_(cfg) {
+  const sheet = getOrCreateSheet_(cfg.name, cfg.headers);
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  const firstCell = String(sheet.getRange(1, 1).getValue() || "");
+  if (!firstCell && lastRow <= 1) {
+    sheet.getRange(1, 1, 1, cfg.headers.length).setValues([cfg.headers]);
+    sheet.getRange(1, 1, 1, cfg.headers.length).setFontWeight("bold");
+    return sheet;
+  }
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  if (headers.length < cfg.headers.length) {
+    const add = cfg.headers.slice(headers.length);
+    sheet.getRange(1, headers.length + 1, 1, add.length).setValues([add]);
+  }
+  return sheet;
+}
+
+function articleSheet_() {
+  return ensureSheetColumns_(SHEETS.articles);
+}
+
+function fetchGemini_(prompt) {
+  const p = PropertiesService.getScriptProperties();
+  const key = p.getProperty("GEMINI_API_KEY") || "";
+  if (!key) throw new Error("GEMINI_API_KEY is not set (Studio > Settings)");
+  const model = p.getProperty("GEMINI_MODEL") || GEMINI_MODEL;
+  const res = UrlFetchApp.fetch(
+    "https://generativelanguage.googleapis.com/v1beta/" + model + ":generateContent",
+    {
+      method: "post",
+      contentType: "application/json",
+      headers: { "x-goog-api-key": key },
+      payload: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+      }),
+      muteHttpExceptions: true
+    }
+  );
+  const code = res.getResponseCode();
+  const txt = res.getContentText();
+  if (code !== 200) {
+    let msg = txt;
+    try { msg = JSON.parse(txt).error.message || txt; } catch (err) {}
+    throw new Error("Gemini error " + code + ": " + msg);
+  }
+  const j = JSON.parse(txt);
+  const parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+  const text = parts.map(function (pt) { return pt.text || ""; }).join("");
+  if (!text.trim()) throw new Error("Gemini returned an empty draft.");
+  return text;
+}
+
+function buildArticlePrompt_(opts) {
+  const topic = String(opts.topic || "").trim();
+  if (!topic) throw new Error("Topic is required");
+  const lang = String(opts.language || "Nepali").trim();
+  const type = String(opts.type || "Article").trim();
+  const words = Number(opts.words || 400);
+  const keywords = String(opts.keywords || "").trim();
+  return [
+    "You are the editorial writer of 'Laghubitta Khabar' (लघुवित्त खबर), a Nepali news and updates portal for the microfinance (लघुवित्त) sector, run by SENNA Network.",
+    "",
+    "Write a ready-to-publish " + type + " article.",
+    "Topic: " + topic,
+    "Language: " + lang,
+    "Approximate length: " + words + " words.",
+    keywords ? "Keywords to include naturally: " + keywords : "",
+    "",
+    "Requirements:",
+    "- Factual, balanced, catchy title (no clickbait, no invented facts).",
+    "- " + (lang === "Nepali" || lang === "हिन्दी" ? "Write the body in " + lang + " (Devanagari script)." : "Write the body in English."),
+    "- 3 to 5 short Blogger labels/tags.",
+    "- Body as clean HTML: use <p>, <h2>, <ul><li>, <strong>, <blockquote>. Do NOT use <html>, <head>, <body>, <script>, <style>, or inline styles.",
+    "- " + (type === "News" ? "Lead with who/what/when/where, then details, then a short quote or outlook." : "Use a clear intro, 2-4 short sections, and a concise conclusion."),
+    "",
+    "Reply in exactly this format:",
+    "TITLE: <title>",
+    "LABELS: <label1>, <label2>, <label3>",
+    "BODY:",
+    "<p>...</p>",
+    "<p>...</p>"
+  ].filter(Boolean).join("\n");
+}
+
+function generateArticle_(opts) {
+  const raw = fetchGemini_(buildArticlePrompt_(opts || {}));
+  const draft = parseDraft_(raw);
+  if (!draft.title || !draft.body) throw new Error("Gemini reply is missing a title or body. Try again.");
+  return draft;
+}
+
+function collectBody_(lines) {
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const t = String(lines[i]).trim();
+    if (t && /^(TITLE|LABELS?|BODY|CONTENT|HTML)\s*:\s*$/i.test(t)) continue;
+    out.push(lines[i]);
+  }
+  return out.join("\n").trim();
+}
+
+function parseDraft_(raw) {
+  raw = String(raw || "").trim();
+  const lines = raw.split(/\r?\n/);
+  let title = "", labels = [], body = "";
+
+  let bodyIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^\s*(BODY|CONTENT|HTML)\s*:\s*(.*)$/i);
+    if (m) {
+      bodyIdx = i;
+      if (m[2].trim()) lines[i] = m[2];
+      break;
+    }
+  }
+
+  const headerLines = bodyIdx > -1 ? lines.slice(0, bodyIdx) : lines;
+  for (let i = 0; i < headerLines.length && (!title || !labels.length); i++) {
+    const mt = headerLines[i].match(/^\s*TITLE\s*:\s*(.*)$/i);
+    const ml = headerLines[i].match(/^\s*LABELS?\s*:\s*(.*)$/i);
+    if (mt && !title) title = mt[1].trim();
+    if (ml && !labels.length) labels = ml[1].split(/[,;]/).map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 5);
+  }
+
+  if (bodyIdx > -1) body = collectBody_(lines.slice(bodyIdx));
+
+  if (!title) {
+    for (let i = 0; i < lines.length; i++) {
+      const t = lines[i].trim();
+      if (t && t.charAt(0) !== "<" && !/^(TITLE|LABELS?|BODY|CONTENT|HTML)\s*:/i.test(t)) { title = t.replace(/^#{1,6}\s*/, ""); break; }
+    }
+  }
+  if (!body) {
+    const ti = title ? raw.indexOf(title) : -1;
+    const rest = ti > -1 ? raw.substring(ti + title.length).replace(/^\s*[:—-]*\s*/, "") : "";
+    if (rest.trim()) body = txtToHtml_(rest);
+  }
+
+  title = title.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^Title\s*:?\s*/i, "").trim();
+  return { title: title, labels: labels, body: body };
+}
+
+function txtToHtml_(md) {
+  md = String(md || "").trim();
+  if (/<\/?[a-z][\s\S]*>/i.test(md) && md.indexOf("```") === -1) {
+    return md.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "");
+  }
+  const lines = md.split(/\r?\n/);
+  const out = [];
+  let list = "";
+  let para = [];
+  const flush = function () {
+    if (para.length) { out.push("<p>" + mdInline_(para.join(" ")) + "</p>"); para = []; }
+  };
+  const closeList = function () {
+    if (list) { out.push("</" + list + ">"); list = ""; }
+  };
+  lines.forEach(function (ln) {
+    const t = ln.trim();
+    if (!t) { flush(); closeList(); return; }
+    let m;
+    if ((m = t.match(/^(#{1,6})\s+(.*)$/))) {
+      flush(); closeList();
+      const lvl = m[1].length > 4 ? 4 : m[1].length;
+      out.push("<h" + lvl + ">" + mdInline_(m[2]) + "</h" + lvl + ">");
+    } else if ((m = t.match(/^[-*]\s+(.*)$/)) || (m = t.match(/^(\d+)[.)]\s+(.*)$/))) {
+      flush();
+      const kind = m[2] !== undefined ? "ol" : "ul";
+      const item = m[2] !== undefined ? m[2] : m[1];
+      if (list !== kind) { closeList(); list = kind; out.push("<" + kind + ">"); }
+      out.push("<li>" + mdInline_(item) + "</li>");
+    } else if ((m = t.match(/^>\s?(.*)$/))) {
+      flush(); closeList();
+      out.push("<blockquote>" + mdInline_(m[1]) + "</blockquote>");
+    } else {
+      closeList();
+      para.push(t);
+    }
+  });
+  flush(); closeList();
+  return out.join("\n");
+}
+
+function mdInline_(s) {
+  s = String(s || "");
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/__([^_]+)__/g, "<strong>$1</strong>");
+  s = s.replace(/(^|\s)\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+  return s;
+}
+
+function saveArticle_(a) {
+  const sheet = articleSheet_();
+  const labels = Array.isArray(a.labels) ? a.labels.join(", ") : String(a.labels || "");
+  sheet.appendRow([
+    new Date(),
+    String(a.title || ""),
+    labels,
+    a.status === "Published" ? "Published" : "Draft",
+    String(a.sourceLink || ""),
+    String(a.body || ""),
+    "",
+    ""
+  ]);
+  return sheet.getLastRow() - 2;
+}
+
+function getArticle_(id) {
+  const sheet = articleSheet_();
+  const row = Number(id) + 2;
+  if (row > sheet.getLastRow()) throw new Error("Article not found");
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const vals = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const a = {};
+  headers.forEach(function (h, j) { a[h] = vals[j]; });
+  return {
+    id: Number(id),
+    timestamp: fmtDate_(a["Timestamp"]),
+    title: String(a["Title"] || ""),
+    labels: String(a["Labels"] || ""),
+    status: String(a["Status"] || "Draft"),
+    sourceLink: String(a["Source Link"] || ""),
+    body: String(a["Body HTML"] || ""),
+    bloggerUrl: String(a["Blogger URL"] || ""),
+    facebookUrl: String(a["Facebook URL"] || "")
+  };
+}
+
+function listArticles_() {
+  const sheet = articleSheet_();
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  const idx = {};
+  data[0].forEach(function (h, j) { idx[h] = j; });
+  const out = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    out.push({
+      id: i - 1,
+      timestamp: fmtDate_(row[idx["Timestamp"]]),
+      title: String(row[idx["Title"]] || ""),
+      status: String(row[idx["Status"]] || "Draft"),
+      sourceLink: String(row[idx["Source Link"]] || ""),
+      bloggerUrl: String(row[idx["Blogger URL"]] || ""),
+      facebookUrl: String(row[idx["Facebook URL"]] || "")
+    });
+  }
+  return out.reverse();
+}
+
+function markArticlePublished_(id, platform, url) {
+  const sheet = articleSheet_();
+  const row = Number(id) + 2;
+  if (row > sheet.getLastRow()) throw new Error("Article not found");
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const idx = {};
+  headers.forEach(function (h, j) { idx[h] = j; });
+  sheet.getRange(row, idx[platform === "Blogger" ? "Blogger URL" : "Facebook URL"] + 1).setValue(url);
+  sheet.getRange(row, idx["Status"] + 1).setValue("Published");
+}
+
+// Studio (google.script.run) versions.
+function studioGenArticle(token, opts) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    return { status: "ok", draft: generateArticle_(opts || {}) };
+  } catch (err) {
+    return { status: "error", message: err.message };
+  }
+}
+
+function studioSaveArticle(token, article) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    const id = saveArticle_(article || {});
+    return { status: "ok", id: id };
+  } catch (err) {
+    return { status: "error", message: err.message };
+  }
+}
+
+function studioGetArticle(token, id) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    return { status: "ok", article: getArticle_(id) };
+  } catch (err) {
+    return { status: "error", message: err.message };
+  }
+}
+
+function studioListArticles(token) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    return { status: "ok", rows: listArticles_() };
+  } catch (err) {
+    return { status: "error", message: err.message };
+  }
+}
+
+function studioPublishArticleBlogger(token, id, title, body, labels, sourceLink) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    const labelArr = String(labels || "").split(/[,;]/).map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 5);
+    const url = postToBlogger_(title, body, labelArr, sourceLink);
+    markArticlePublished_(id, "Blogger", url);
+    return { status: "ok", url: url };
+  } catch (err) {
+    return { status: "error", message: err.message };
+  }
+}
+
+function studioPublishArticleFacebook(token, id, message, link) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    const url = postToFacebook_(message, link);
+    markArticlePublished_(id, "Facebook", url);
     return { status: "ok", url: url };
   } catch (err) {
     return { status: "error", message: err.message };
