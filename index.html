@@ -75,7 +75,26 @@ textarea{resize:vertical;min-height:90px}
 .success-screen p{color:#666;font-size:13px;margin-top:6px}
 .note{background:var(--gold-light);border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-size:12px;color:#6b5320;margin-top:16px;line-height:1.5}
 .note a{color:var(--navy-2)}
-@media(max-width:480px){.portal-grid{grid-template-columns:1fr;max-width:320px}.hero h1{font-size:18px}}
+.admin-link{display:inline-block;margin-top:10px;font-size:11px;color:var(--navy-2);text-decoration:none;opacity:.7}
+.admin-link:hover{opacity:1}
+.ad-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.ad-stat{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.ad-stat b{display:block;font-size:20px;color:var(--navy)}
+.ad-stat span{font-size:10px;color:#888}
+.ad-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.ad-tab{background:var(--white);border:1.5px solid var(--line);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--navy);transition:.2s}
+.ad-tab:hover{border-color:var(--navy-2)}
+.ad-tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ad-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn2{background:var(--white);border:1.5px solid var(--navy-2);color:var(--navy-2);padding:9px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.btn2:hover{background:var(--navy-2);color:#fff}
+.ad-wrap{max-height:480px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:12px}
+table.ad-table{width:100%;border-collapse:collapse;font-size:11px}
+.ad-table th,.ad-table td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.ad-table th{background:var(--navy);color:#fff;position:sticky;top:0;z-index:1}
+.ad-table tr:nth-child(even){background:#fafaf8}
+.ad-empty{text-align:center;color:#999;padding:24px;font-size:12px}
+@media(max-width:480px){.portal-grid{grid-template-columns:1fr;max-width:320px}.hero h1{font-size:18px}.ad-stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -121,7 +140,8 @@ textarea{resize:vertical;min-height:90px}
   </div>
   <div class="home-footer">
     Independent public welfare platform &middot; लघुवित्त खबर<br>
-    <a href="https://laghubittakhabar.pages.dev">laghubittakhabar.pages.dev</a>
+    <a href="https://laghubittakhabar.pages.dev">laghubittakhabar.pages.dev</a><br>
+    <a href="#" class="admin-link" onclick="openPortal('admin');return false;">Admin Login</a>
   </div>
 </div>
 
@@ -145,8 +165,6 @@ textarea{resize:vertical;min-height:90px}
         <input type="tel" id="jMobile" required placeholder="98XXXXXXXX">
         <label>Email <span class="np">इमेल</span></label>
         <input type="email" id="jEmail" placeholder="optional">
-        <label>District <span class="np">जिल्ला</span></label>
-        <input type="text" id="jDistrict" placeholder="e.g. Kathmandu">
         <label>Academic Qualification <span class="np">शैक्षिक योग्यता</span> <span class="req">*</span></label>
         <select id="jAcademic" required>
           <option value="">-- Select --</option>
@@ -156,6 +174,23 @@ textarea{resize:vertical;min-height:90px}
           <option value="Master">Master (स्नातकोत्तर)</option>
           <option value="Other">Other</option>
         </select>
+        <label>Experience <span class="np">अनुभव</span> <span class="req">*</span></label>
+        <select id="jExp" required>
+          <option value="">-- Select --</option>
+          <option value="Fresher (0-1 yr)">Fresher (0-1 yr)</option>
+          <option value="1-2 years">1-2 years</option>
+          <option value="3-5 years">3-5 years</option>
+          <option value="5+ years">5+ years</option>
+        </select>
+        <label>Current Status <span class="np">हालको अवस्था</span> <span class="req">*</span></label>
+        <select id="jStatus" required>
+          <option value="">-- Select --</option>
+          <option value="Employed">Employed (रोजगार)</option>
+          <option value="Unemployed / Searching">Unemployed / Searching (बेरोजगार / खोज्दै)</option>
+          <option value="Student">Student (विद्यार्थी)</option>
+        </select>
+        <label>Home District <span class="np">गृह जिल्ला</span></label>
+        <input type="text" id="jDistrict" placeholder="e.g. Kathmandu">
       </div>
       <div class="card">
         <h2><span class="hicon" style="background:var(--gold-light);color:var(--gold)">&#128188;</span> Job Interest</h2>
@@ -167,12 +202,28 @@ textarea{resize:vertical;min-height:90px}
           <label><input type="radio" name="sector" value="Insurance"> Insurance (बीमा)</label>
           <label><input type="radio" name="sector" value="Other"> Other</label>
         </div>
-        <label>Help Needed <span class="np">चाहिएको सहयोग</span> <span class="req">*</span></label>
+        <label>Preferred Work Location (Province) <span class="np">काम गर्न रुचाउने प्रदेश</span> <span class="req">*</span></label>
+        <select id="jProvince" required>
+          <option value="">-- Select --</option>
+          <option value="Anywhere in Nepal">Anywhere in Nepal (जुनसुकै)</option>
+          <option value="Kathmandu Valley">Kathmandu Valley (काठमाडौं उपत्यका)</option>
+          <option value="Koshi (Province 1)">Koshi / Province 1 (कोशी)</option>
+          <option value="Madhesh">Madhesh (मधेश)</option>
+          <option value="Bagmati">Bagmati (बागमती)</option>
+          <option value="Gandaki">Gandaki (गण्डकी)</option>
+          <option value="Lumbini">Lumbini (लुम्बिनी)</option>
+          <option value="Karnali">Karnali (कर्णाली)</option>
+          <option value="Sudurpashchim">Sudurpashchim (सुदूरपश्चिम)</option>
+        </select>
+        <label>Preferred District / City <span class="np">रुचाइएको जिल्ला / शहर</span></label>
+        <input type="text" id="jCity" placeholder="e.g. Biratnagar (optional)">
+        <label>Help Needed (select all that apply) <span class="np">चाहिएको सहयोग (सबै छान्नुहोस्)</span> <span class="req">*</span></label>
         <div class="rg">
-          <label><input type="radio" name="help" value="Professional CV & Cover Letter"> Professional CV &amp; Cover Letter</label>
-          <label><input type="radio" name="help" value="Exam Prep Guide & Materials"> Exam Prep Guide &amp; Materials</label>
-          <label><input type="radio" name="help" value="Interview Preparation"> Interview Preparation</label>
-          <label><input type="radio" name="help" value="All of the above"> All of the above</label>
+          <label><input type="checkbox" name="help" value="Professional CV & Cover Letter"> Professional CV &amp; Cover Letter</label>
+          <label><input type="checkbox" name="help" value="Exam Prep Guide & Materials"> Exam Prep Guide &amp; Materials</label>
+          <label><input type="checkbox" name="help" value="Interview Preparation"> Interview Preparation</label>
+          <label><input type="checkbox" name="help" value="Reference / Networking"> Reference / Networking</label>
+          <label><input type="checkbox" name="help" value="All of the above"> All of the above</label>
         </div>
       </div>
       <div class="card">
@@ -212,6 +263,8 @@ textarea{resize:vertical;min-height:90px}
         <input type="text" id="hName" placeholder="Optional">
         <label>Mobile Number <span class="np">मोबाइल नम्बर</span> <span class="req">*</span></label>
         <input type="tel" id="hMobile" required placeholder="98XXXXXXXX">
+        <label>Home District <span class="np">गृह जिल्ला</span></label>
+        <input type="text" id="hDistrict" placeholder="e.g. Rupandehi">
         <label>Institution Name <span class="np">संस्थाको नाम</span> <span class="req">*</span></label>
         <input type="text" id="hInstitution" required placeholder="e.g. ABC Laghubitta Bittiya Sanstha">
         <label>Institution Type <span class="np">संस्थाको प्रकार</span> <span class="req">*</span></label>
@@ -237,6 +290,14 @@ textarea{resize:vertical;min-height:90px}
         <textarea id="hIssue" required placeholder="Please describe your issue in detail (कृपया विस्तृतमा लेख्नुहोस्)..."></textarea>
         <label>Preferred Contact Time <span class="np">सम्पर्क गर्ने समय</span></label>
         <input type="text" id="hContact" placeholder="e.g. 10 AM - 6 PM">
+        <label>Preferred Contact Method <span class="np">सम्पर्क गर्ने माध्यम</span></label>
+        <div class="rg">
+          <label><input type="radio" name="hmethod" value="Phone call"> Phone call (फोन)</label>
+          <label><input type="radio" name="hmethod" value="SMS"> SMS (एसएमएस)</label>
+          <label><input type="radio" name="hmethod" value="WhatsApp / Viber"> WhatsApp / Viber</label>
+          <label><input type="radio" name="hmethod" value="Messenger"> Messenger (मेसेन्जर)</label>
+          <label><input type="radio" name="hmethod" value="Email"> Email (इमेल)</label>
+        </div>
       </div>
       <button type="submit" class="submit-btn" id="hSubmit">Submit Grievance / उजुरी पेश गर्नुहोस्</button>
       <div class="msg" id="hMsg"></div>
@@ -274,6 +335,19 @@ textarea{resize:vertical;min-height:90px}
         <input type="email" id="sEmail" placeholder="optional">
         <label>District <span class="np">जिल्ला</span> <span class="req">*</span></label>
         <input type="text" id="sDistrict" required placeholder="e.g. Lalitpur">
+        <label>Category <span class="np">श्रेणी</span> <span class="req">*</span></label>
+        <div class="rg">
+          <label><input type="radio" name="scat" value="Microfinance" checked> Microfinance (लघुवित्त)</label>
+          <label><input type="radio" name="scat" value="Bank"> Bank (बैंक)</label>
+          <label><input type="radio" name="scat" value="Cooperative"> Cooperative (सहकारी)</label>
+          <label><input type="radio" name="scat" value="Insurance"> Insurance (बीमा)</label>
+          <label><input type="radio" name="scat" value="Client / Borrower"> Client / Borrower (ग्राहक)</label>
+          <label><input type="radio" name="scat" value="Job Seeker"> Job Seeker (जागिर खोज्दै)</label>
+          <label><input type="radio" name="scat" value="Student"> Student (विद्यार्थी)</label>
+          <label><input type="radio" name="scat" value="Other"> Other (अन्य)</label>
+        </div>
+        <label>Institution / Company <span class="np">संस्था / कम्पनी</span></label>
+        <input type="text" id="sInstitution" placeholder="e.g. Infinity Laghubitta Bittiya Sanstha">
       </div>
       <div class="card">
         <h2><span class="hicon" style="background:#e8eef6;color:var(--navy-2)">&#128188;</span> Your Role</h2>
@@ -288,14 +362,14 @@ textarea{resize:vertical;min-height:90px}
           <label><input type="radio" name="prof" value="Student"> Student</label>
           <label><input type="radio" name="prof" value="Other"> Other</label>
         </div>
-        <label>How would you like to contribute? <span class="np">कसरी योगदान गर्न चाहनुहुन्छ?</span> <span class="req">*</span></label>
+        <label>How would you like to contribute? (select all that apply) <span class="np">कसरी योगदान गर्न चाहनुहुन्छ? (सबै छान्नुहोस्)</span> <span class="req">*</span></label>
         <div class="rg">
-          <label><input type="radio" name="contrib" value="Share experiences / insights"> Share experiences / insights</label>
-          <label><input type="radio" name="contrib" value="Help draft grievance letters"> Help draft grievance letters</label>
-          <label><input type="radio" name="contrib" value="Refer job opportunities"> Refer job opportunities</label>
-          <label><input type="radio" name="contrib" value="Community support"> Community support</label>
-          <label><input type="radio" name="contrib" value="Volunteer"> Volunteer</label>
-          <label><input type="radio" name="contrib" value="Other"> Other</label>
+          <label><input type="checkbox" name="contrib" value="Share experiences / insights"> Share experiences / insights</label>
+          <label><input type="checkbox" name="contrib" value="Help draft grievance letters"> Help draft grievance letters</label>
+          <label><input type="checkbox" name="contrib" value="Refer job opportunities"> Refer job opportunities</label>
+          <label><input type="checkbox" name="contrib" value="Community support"> Community support</label>
+          <label><input type="checkbox" name="contrib" value="Volunteer"> Volunteer</label>
+          <label><input type="checkbox" name="contrib" value="Other"> Other</label>
         </div>
       </div>
       <div class="card">
@@ -362,6 +436,48 @@ textarea{resize:vertical;min-height:90px}
   </div>
 </div>
 
+<!-- ==================== ADMIN DASHBOARD ==================== -->
+<div class="portal" id="portal-admin">
+  <div class="topbar">
+    <button class="back" onclick="goHome()">&larr;</button>
+    <div class="eyebrow">Laghubitta Khabar</div>
+    <h1>Admin Dashboard</h1>
+    <div class="np">व्यवस्थापक प्यानल</div>
+    <p>Protected records viewer &amp; bulk import</p>
+  </div>
+  <div class="sec">
+    <div id="adLogin">
+      <div class="card">
+        <h2><span class="hicon" style="background:#e8eef6;color:var(--navy-2)">&#128274;</span> Admin Login</h2>
+        <label>Admin Password <span class="np">व्यवस्थापक पासवर्ड</span> <span class="req">*</span></label>
+        <input type="password" id="adPass" placeholder="Enter admin password">
+        <button class="submit-btn" id="adLoginBtn" onclick="adminLogin()">Login / लगइन</button>
+        <div class="msg" id="adMsg"></div>
+      </div>
+    </div>
+    <div id="adDash" style="display:none">
+      <div class="ad-stats" id="adStats"></div>
+      <div class="card">
+        <h2><span class="hicon" style="background:var(--gold-light);color:var(--gold)">&#128196;</span> Records <span class="np">विवरणहरू</span></h2>
+        <div class="ad-tabs" id="adTabs"></div>
+        <div class="ad-actions">
+          <button class="btn2" id="adExportBtn" onclick="exportCSV()">Export CSV</button>
+          <button class="btn2" onclick="logoutAdmin()">Logout</button>
+        </div>
+        <div class="ad-wrap" id="adTable"></div>
+      </div>
+      <div class="card">
+        <h2><span class="hicon" style="background:#e8f4ec;color:var(--ok)">&#128228;</span> Bulk Import SENNA Members (CSV)</h2>
+        <div class="note">Paste CSV rows for the <b>SennaNetwork</b> sheet. Column order (header row optional): Full Name, Mobile, Email, Home District, Category, Institution, Profession, Contribution, Reason, Consent. Blank Category becomes <b>Microfinance</b>. Ideal for uploading large member lists (e.g. Infinity's 1.12 lakh members) in batches.</div>
+        <label>CSV Rows</label>
+        <textarea id="adImport" style="min-height:150px" placeholder="Sita Gurung,98XXXXXXXX,,Kathmandu,Microfinance,Infinity Laghubitta,MFI Employee,Community support,,Yes&#10;Ramesh Adhikari,97XXXXXXXX,,Lalitpur,Microfinance,Infinity Laghubitta,Agent,Volunteer,,Yes"></textarea>
+        <button class="submit-btn" id="adImportBtn" onclick="importSenna()">Import Rows</button>
+        <div class="msg" id="adImportMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 var SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
@@ -389,13 +505,20 @@ function postForm(url,payload){
   return fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
 }
 
+function collectChecked(scope, name){
+  var els = scope.querySelectorAll('input[name="'+name+'"]:checked');
+  var arr = [];
+  els.forEach(function(c){ arr.push(c.value); });
+  return arr.join("; ");
+}
+
 // ---- JOB FORM ----
 document.getElementById("jobForm").addEventListener("submit",function(e){
   e.preventDefault();
   var sector=this.querySelector('input[name="sector"]:checked');
-  var help=this.querySelector('input[name="help"]:checked');
+  var help=collectChecked(this,"help");
   if(!sector){showMsg("jMsg","Please select a desired sector.","err");return;}
-  if(!help){showMsg("jMsg","Please select the help you need.","err");return;}
+  if(!help){showMsg("jMsg","Please select at least one help option.","err");return;}
   if(!isConfigured()){showMsg("jMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
 
   var payload={
@@ -403,10 +526,14 @@ document.getElementById("jobForm").addEventListener("submit",function(e){
     fullName:document.getElementById("jName").value.trim(),
     mobile:document.getElementById("jMobile").value.trim(),
     email:document.getElementById("jEmail").value.trim(),
-    district:document.getElementById("jDistrict").value.trim(),
     academic:document.getElementById("jAcademic").value,
+    experience:document.getElementById("jExp").value,
+    status:document.getElementById("jStatus").value,
+    district:document.getElementById("jDistrict").value.trim(),
+    province:document.getElementById("jProvince").value,
+    city:document.getElementById("jCity").value.trim(),
     sector:sector.value,
-    helpNeeded:help.value,
+    helpNeeded:help,
     notes:document.getElementById("jNotes").value.trim(),
     timestamp:new Date().toISOString()
   };
@@ -435,6 +562,7 @@ document.getElementById("helpForm").addEventListener("submit",function(e){
   e.preventDefault();
   var itype=this.querySelector('input[name="itype"]:checked');
   var iissue=this.querySelector('input[name="iissue"]:checked');
+  var hmethod=this.querySelector('input[name="hmethod"]:checked');
   if(!itype){showMsg("hMsg","Please select institution type.","err");return;}
   if(!iissue){showMsg("hMsg","Please select issue type.","err");return;}
   if(!isConfigured()){showMsg("hMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
@@ -443,11 +571,13 @@ document.getElementById("helpForm").addEventListener("submit",function(e){
     form:"help",
     name:document.getElementById("hName").value.trim(),
     mobile:document.getElementById("hMobile").value.trim(),
+    district:document.getElementById("hDistrict").value.trim(),
     institution:document.getElementById("hInstitution").value.trim(),
     institutionType:itype.value,
     issueType:iissue.value,
     issue:document.getElementById("hIssue").value.trim(),
     contactTime:document.getElementById("hContact").value.trim(),
+    contactMethod:hmethod ? hmethod.value : "",
     timestamp:new Date().toISOString()
   };
 
@@ -474,9 +604,11 @@ document.getElementById("hAgain").addEventListener("click",function(){
 document.getElementById("sennaForm").addEventListener("submit",function(e){
   e.preventDefault();
   var prof=this.querySelector('input[name="prof"]:checked');
-  var contrib=this.querySelector('input[name="contrib"]:checked');
+  var scat=this.querySelector('input[name="scat"]:checked');
+  var contrib=collectChecked(this,"contrib");
   if(!prof){showMsg("sMsg","Please select your profession/role.","err");return;}
-  if(!contrib){showMsg("sMsg","Please select how you want to contribute.","err");return;}
+  if(!scat){showMsg("sMsg","Please select a category.","err");return;}
+  if(!contrib){showMsg("sMsg","Please select at least one contribution option.","err");return;}
   if(!isConfigured()){showMsg("sMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
 
   var payload={
@@ -485,8 +617,10 @@ document.getElementById("sennaForm").addEventListener("submit",function(e){
     mobile:document.getElementById("sMobile").value.trim(),
     email:document.getElementById("sEmail").value.trim(),
     district:document.getElementById("sDistrict").value.trim(),
+    category:scat.value,
+    institution:document.getElementById("sInstitution").value.trim(),
     profession:prof.value,
-    contribution:contrib.value,
+    contribution:contrib,
     reason:document.getElementById("sReason").value.trim(),
     consent:document.getElementById("sConsent").checked ? "Yes" : "No",
     timestamp:new Date().toISOString()
@@ -545,6 +679,138 @@ document.getElementById("cAgain").addEventListener("click",function(){
   document.getElementById("confForm").style.display="block";
   document.getElementById("cMsg").className="msg";
 });
+
+// ---- ADMIN DASHBOARD ----
+var AD_FORMS = [
+  {key:"job", label:"Job Career Sathi"},
+  {key:"help", label:"Client Help"},
+  {key:"senna", label:"SENNA Network"},
+  {key:"confession", label:"Confession"}
+];
+var AD_CURRENT = "senna";
+var ADMIN_TOKEN = sessionStorage.getItem("lkAdminToken") || "";
+
+function adminLogin(){
+  var pass=document.getElementById("adPass").value;
+  if(!pass){showMsg("adMsg","Enter the admin password.","err");return;}
+  fetch(SCRIPT_URL+"?action=login&pass="+encodeURIComponent(pass))
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.status==="ok"){
+      ADMIN_TOKEN=d.token;
+      sessionStorage.setItem("lkAdminToken",d.token);
+      showAdminDash();
+    } else {
+      showMsg("adMsg",d.message||"Login failed.","err");
+    }
+  }).catch(function(){showMsg("adMsg","Network error. Please try again.","err");});
+}
+
+function showAdminDash(){
+  document.getElementById("adLogin").style.display="none";
+  document.getElementById("adDash").style.display="block";
+  renderTabs();
+  loadStats();
+  loadRecords(AD_CURRENT);
+}
+
+function renderTabs(){
+  var box=document.getElementById("adTabs");
+  box.innerHTML="";
+  AD_FORMS.forEach(function(f){
+    var b=document.createElement("button");
+    b.className="ad-tab"+(f.key===AD_CURRENT?" on":"");
+    b.textContent=f.label;
+    b.onclick=function(){AD_CURRENT=f.key;renderTabs();loadRecords(f.key);};
+    box.appendChild(b);
+  });
+}
+
+function loadStats(){
+  fetch(SCRIPT_URL+"?action=stats&token="+encodeURIComponent(ADMIN_TOKEN))
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var box=document.getElementById("adStats");
+    box.innerHTML="";
+    AD_FORMS.forEach(function(f){
+      var n=(d[f.key]||0).toLocaleString();
+      var s=document.createElement("div");
+      s.className="ad-stat";
+      s.innerHTML="<b>"+n+"</b><span>"+f.label+"</span>";
+      box.appendChild(s);
+    });
+  }).catch(function(){});
+}
+
+function loadRecords(form){
+  var wrap=document.getElementById("adTable");
+  wrap.innerHTML='<div class="ad-empty">Loading...</div>';
+  fetch(SCRIPT_URL+"?action=records&form="+form+"&limit=500&token="+encodeURIComponent(ADMIN_TOKEN))
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.status==="error"){wrap.innerHTML='<div class="ad-empty">'+d.message+"</div>";return;}
+    var rows=d.rows||[];
+    if(!rows.length){wrap.innerHTML='<div class="ad-empty">No records yet. Total: '+(d.total||0)+"</div>";return;}
+    var keys=Object.keys(rows[0]);
+    var html="<table class='ad-table'><thead><tr>";
+    keys.forEach(function(k){html+="<th>"+esc(k)+"</th>";});
+    html+="</tr></thead><tbody>";
+    rows.forEach(function(r){
+      html+="<tr>";
+      keys.forEach(function(k){
+        html+="<td>"+esc(String(r[k]==null?"":r[k]))+"</td>";
+      });
+      html+="</tr>";
+    });
+    html+="</tbody></table><div class='ad-empty'>Showing latest "+rows.length+" of "+(d.total||rows.length)+" records</div>";
+    wrap.innerHTML=html;
+  }).catch(function(){wrap.innerHTML='<div class="ad-empty">Network error loading records.</div>';});
+}
+
+function exportCSV(){
+  window.location.href=SCRIPT_URL+"?action=export&form="+AD_CURRENT+"&token="+encodeURIComponent(ADMIN_TOKEN);
+}
+
+function logoutAdmin(){
+  ADMIN_TOKEN="";
+  sessionStorage.removeItem("lkAdminToken");
+  document.getElementById("adPass").value="";
+  document.getElementById("adDash").style.display="none";
+  document.getElementById("adLogin").style.display="block";
+}
+
+function importSenna(){
+  if(!isConfigured()){showMsg("adImportMsg","Setup incomplete: configure SCRIPT_URL.","err");return;}
+  var text=document.getElementById("adImport").value.trim();
+  if(!text){showMsg("adImportMsg","Paste some CSV rows first.","err");return;}
+  var lines=text.split(/\r?\n/).filter(function(l){return l.trim().length>0;});
+  var rows=[];
+  lines.forEach(function(line){
+    var c=line.split(",").map(function(x){return x.trim();});
+    if(c[0] && c[0].toLowerCase().indexOf("full name")!==-1) return;
+    var r=Array(10).fill("");
+    c.slice(0,10).forEach(function(v,i){r[i]=v;});
+    if(!r[4]) r[4]="Microfinance";
+    rows.push(r);
+  });
+  if(!rows.length){showMsg("adImportMsg","No valid rows found.","err");return;}
+  var btn=document.getElementById("adImportBtn");
+  btn.disabled=true;btn.textContent="Importing "+rows.length+" rows...";
+  postForm(SCRIPT_URL,{action:"import",form:"senna",token:ADMIN_TOKEN,rows:rows})
+  .then(function(){
+    showMsg("adImportMsg","Import request sent for "+rows.length+" rows. Refresh records shortly.","ok");
+  }).catch(function(){
+    showMsg("adImportMsg","Network error during import.","err");
+  }).finally(function(){
+    btn.disabled=false;btn.textContent="Import Rows";
+  });
+}
+
+function esc(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+if(ADMIN_TOKEN){showAdminDash();}
 </script>
 </body>
 </html>
