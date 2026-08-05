@@ -141,6 +141,21 @@ Flow: public Confession form submits → sheet row with status `Pending` → Stu
 2. Create a Facebook App (developers.facebook.com → Create App), add the *pages_manage_posts* and *publish_pages* permissions, and generate a **long-lived page access token** (System User or the app's access token exchange — see Facebook's "Long-lived Page Access Token" guide).
 3. Paste the Page ID and the token into Studio → Settings.
 
+## Blogger Embed (optional — "genuine" blogspot home)
+
+`blogger-page.html` is the whole forms portal packaged to paste into a **Blogger Page**:
+
+1. Blogger dashboard → **Pages → New Page**
+2. In the editor toolbar click the **HTML view** icon
+3. Paste the **entire** contents of `blogger-page.html`
+4. Title the page **Forms**, then **Publish**
+5. Your portal is now live at `https://laghubittakhabar.blogspot.com/p/forms.html` — forms still submit to your Google Sheet via `SCRIPT_URL`
+
+Notes:
+- The logo image currently loads from `https://laghubitta-khabar-forms.pages.dev/logo.webp`. To make it fully independent of Cloudflare, upload `logo.webp` into a Blogger post/media and replace that URL (or re-generate the file).
+- Blogger gives page URLs the `/p/<name>.html` format. A clean `/forms` path needs a custom domain attached to Blogger.
+- The blog theme wraps the page (header/sidebar). Pick a minimal theme or hide the header if you want a full-screen look.
+
 ## Roadmap (step by step)
 
 - **Step 1 (done):** Forms portal (4 forms) + Google Sheet database + Admin Studio UI
@@ -154,6 +169,7 @@ The Studio's **Settings** tab stores `BLOG_ID`, `BLOGGER_TOKEN` (+ refresh token
 
 - `Code.gs` — Apps Script backend (form intake, admin auth, REST + Studio routes)
 - `studio.html` — Admin Studio UI (paste into Apps Script as an HTML file named `Index`)
-- `index.html` — public forms portal on GitHub Pages
+- `index.html` — public forms portal on GitHub Pages / Cloudflare Pages
+- `blogger-page.html` — same portal packaged to paste into a Blogger Page
 - `logo.webp` — portal logo
 - `README.md` — this file
