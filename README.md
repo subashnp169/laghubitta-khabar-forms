@@ -1,23 +1,50 @@
 # Laghubitta Khabar — Help, Career & Network Portal
 
-Single-page bilingual (English + Nepali) portal with **3 forms** for the Laghubitta Khabar / SENNA Network initiative:
+Single-page bilingual (English + Nepali) portal with **4 forms** for the Laghubitta Khabar / SENNA Network initiative:
 
 1. **Job Career Sathi** - Free CV, cover letter & exam preparation help for MFI/bank/cooperative jobs
 2. **Client Help Model** - Grievance reporting: harassment, illegal interest, CIB problems
 3. **SENNA Network** - Membership registration for the genuine people's network
 4. **Confession** - Anonymous sharing of experiences (no identity required)
-5. **Admin Dashboard** - Password-protected stats, records viewer, CSV export & bulk SENNA member import
+5. **Admin Studio** (separate app, password-protected) - Records, bulk import, Confessions queue, Content Studio, CV generator & placement tracking
 
 ## Architecture
 
+**One source, many deploy targets.** You only ever edit a handful of source files; a build script regenerates every artifact.
+
 ```
-QR code -> Cloudflare Pages (index.html) -> fetch(POST) -> Google Apps Script Web App -> Google Sheets
+                        edit only these
+                       ┌──────────────────────────────┐
+                       │  Code.gs       (backend)      │
+                       │  src/portal.html (public site) │
+                       │  studio.html   (admin studio)  │
+                       └──────────────┬───────────────┘
+                                      │  node build.js
+                       ┌──────────────┴───────────────┐
+                       │                              │
+                 appscript/                    dist/ + blogger-page.html
+            (paste Code.gs + studio.html)   (Cloudflare Pages + Blogger iframe)
+```
+
+```
+Users -> Cloudflare Pages (dist/) -> fetch(POST/GET) -> Google Apps Script Web App -> Google Sheets + Google Drive (CVs)
 ```
 
 Live URLs:
-- Portal: `https://laghubitta-khabar-forms.pages.dev`
+- Portal: `https://laghubittakhabar.pages.dev` (Cloudflare Pages)
 - Admin Studio: your Apps Script Web App URL (no query string)
 - Backup mirror: `https://subashnp169.github.io/laghubitta-khabar-forms/`
+
+## Single-Source Build
+
+1. Edit `Code.gs`, `src/portal.html`, `studio.html` (and `site-config.json` for URLs).
+2. Run `node build.js`. It regenerates:
+   - `appscript/Code.gs` + `appscript/studio.html` — paste these into Apps Script.
+   - `dist/` — Cloudflare Pages output (`index.html`, `logo.webp`, `_headers`).
+   - `blogger-page.html` — iframe wrapper to paste into Blogger.
+3. Commit + push. GitHub Pages (gh-pages) mirrors the repo root; Cloudflare deploys `dist/`.
+
+> **Important:** after changing `Code.gs`/`studio.html`, re-paste them into Apps Script and re-deploy **the same deployment** (Manage Deployments → edit pencil → Version: New version) so your existing `/exec` URL stays valid.
 
 ## Setup
 
@@ -25,72 +52,79 @@ Live URLs:
 
 1. Create a new Google Sheet named "Laghubitta Khabar Forms"
 2. Go to Extensions -> Apps Script
-3. Delete default code, paste the contents of `Code.gs`
+3. Delete default code, paste the contents of `appscript/Code.gs`
 4. Deploy -> New deployment -> Web app
    - Execute as: Me
    - Who has access: Anyone
-5. Copy the Web App URL (ends in `/exec`) and set it as `SCRIPT_URL` in `index.html`
+5. Copy the Web App URL (ends in `/exec`) and set it as `scriptUrl` in `site-config.json`, then run `node build.js` so the portal uses it.
 
 ### 2. Connect Frontend
 
-1. Open `index.html`
-2. Find `var SCRIPT_URL = "...";`
-3. Replace with your Web App URL (already done for the current deployment)
+1. Open `site-config.json`
+2. Set `scriptUrl` to your Web App URL and `portalUrl` to your public portal URL
+3. Run `node build.js` — this injects the URL into `dist/index.html`, `blogger-page.html`, and regenerates `appscript/`
 
 ### 3. Set Admin Password (Authorization)
 
 1. Open your Google Sheet (the same one linked to the script)
 2. A **Setup** menu appears at the top of the Sheet
 3. Click **Setup -> Set Admin Password** and enter a password
-4. This password unlocks the **Admin Dashboard** (login link in the homepage footer) for viewing stats, records, CSV export, and bulk import
+4. This password unlocks the **Admin Studio** at your Web App URL for viewing stats, records, CSV export, bulk import, and the newer features below
 
 ### 4. Add the Admin Studio UI
 
 1. In the Apps Script editor, click **+** next to Files -> HTML
 2. Name it exactly `Index`
-3. Delete the default content and paste the contents of `studio.html`
-4. Save. Visiting your **Web App URL** (with no query string) now opens the **Admin Studio** — password-protected dashboard with Records, Bulk Import, and Settings tabs
+3. Delete the default content and paste the contents of `appscript/studio.html`
+4. Save. Visiting your **Web App URL** (with no query string) now opens the **Admin Studio** — password-protected dashboard with Records, Bulk Import, Settings, Confessions, and Content Studio tabs
 
-### 4. Deploy to Cloudflare Pages (primary)
+> Note: the public portal (`index.html`) no longer contains any admin code. Admin functions live only in the Studio.
 
-1. Put `index.html` + `logo.webp` in a folder (e.g. `cloudflare-dist`)
-2. Deploy with wrangler (already authenticated):
-   ```
-   npx wrangler pages deploy cloudflare-dist --project-name=laghubitta-khabar-forms
-   ```
-3. Live at `https://laghubitta-khabar-forms.pages.dev`
+### 5. Deploy to Cloudflare Pages (primary)
 
-### 5. Custom Domain (Cloudflare)
+```
+npx wrangler login
+npx wrangler pages deploy dist --project-name=laghubittakhabar
+```
 
-1. In the Cloudflare dashboard: **Workers & Pages -> laghubitta-khabar-forms -> Custom domains**
+1. Live at `https://laghubittakhabar.pages.dev`
+2. Set `portalUrl` in `site-config.json` to this URL and re-run `node build.js`.
+
+(Optional) connect the GitHub repo in the Cloudflare dashboard so each push rebuilds automatically — build command `node build.js`, output directory `dist`.
+
+### 6. Custom Domain (Cloudflare)
+
+1. In the Cloudflare dashboard: **Workers & Pages -> laghubittakhabar -> Custom domains**
 2. Click **Set up a custom domain** and enter your domain (e.g. `forms.laghubittakhabar.com`)
 3. If your domain is already on Cloudflare, DNS is added automatically.
-4. If it is not on Cloudflare yet: add your domain to Cloudflare first, then repeat step 2 (a `CNAME laghubitta-khabar-forms.pages.dev` record is created for you).
+4. If it is not on Cloudflare yet: add your domain to Cloudflare first, then repeat step 2 (a `CNAME laghubittakhabar.pages.dev` record is created for you).
 
-### 6. Backup Mirror (GitHub Pages)
+### 7. Backup Mirror (GitHub Pages)
 
 1. Push to the GitHub repo
 2. Settings -> Pages -> Source: `gh-pages` branch (root `/`)
 3. Backup at `https://subashnp169.github.io/laghubitta-khabar-forms/`
 
-### 7. Generate QR Code
+### 8. Generate QR Code
 
 ```
-https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=https://laghubitta-khabar-forms.pages.dev/
+https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=https://laghubittakhabar.pages.dev/
 ```
 
 ## Google Sheets Structure
 
 The backend creates four sheets automatically. **Google Sheets acts as the database** — it stores every submission for later use and supports bulk import of large member lists (e.g. importing 1.12 lakh members into SENNA in batches).
 
-**JobCareer:**
-| Timestamp | Full Name | Mobile | Email | Academic Qualification | Experience | Current Status | Home District | Preferred Province | Preferred City | Desired Sector | Help Needed | Notes |
+**JobCareer** (last 3 columns drive the placement lifecycle):
+| Timestamp | Full Name | Mobile | Email | Academic Qualification | Experience | Current Status | Home District | Preferred Province | Preferred City | Desired Sector | Help Needed | Notes | Placement Status | Placed Date | Mentor/Referrer |
+| | | | | | | | | | | | | | `New`/`In Review`/`CV Sent`/`Interview`/`Placed` | when `Placed` | who referred them |
 
 **ClientHelp:**
 | Timestamp | Name | Mobile | Home District | Institution Name | Institution Type | Issue Type | Issue Description | Preferred Contact Time | Contact Method |
 
-**SennaNetwork:**
-| Timestamp | Full Name | Mobile | Email | Home District | Category | Institution | Profession | Contribution | Reason | Consent |
+**SennaNetwork** (last column is the pay-it-forward flag):
+| Timestamp | Full Name | Mobile | Email | Home District | Category | Institution | Profession | Contribution | Reason | Consent | Member Type |
+| | | | | | | | | | | | `Member`/`Alumni` |
 
 **Confessions:**
 | Timestamp | Category | Confession | Nickname | District | Status | Published |
@@ -159,18 +193,28 @@ Flow: enter a topic in the Studio → Gemini drafts the article (title + labels 
 
 Requirements: Blogger Blog ID + Blogger Access Token (Step 2) and/or Facebook Page ID + Page Access Token (Step 2) are reused for article publishing. Publishing is always manual — no unattended auto-posting.
 
+## Step 4 — Help the Needy (CV generator + placement + pay-it-forward)
+
+The Studio **Records** tab now has action buttons per row:
+
+- **→ SENNA** (Job / Client Help rows) — push a genuine applicant into the SENNA Network membership sheet (duplicate-guarded by mobile/email).
+- **CV** (Job / SENNA rows) — builds a professional CV as a Google Doc in your Drive folder (`Settings → Folder ID`) and opens the shareable link, ready to send to the applicant.
+- **Place** (Job rows) — set the placement lifecycle: `New → In Review → CV Sent → Interview → Placed`. When you mark someone **Placed**, the matching SENNA member (by mobile/email) is automatically flagged **Alumni** — the pay-it-forward loop where helped people mentor/donate to the next batch.
+
+Requirements: set a **Folder ID** in Studio → Settings (create a Drive folder and copy its URL ID). The first time you use CV generation, Apps Script will ask for Drive/Docs permissions — run `studioGenCV` from the editor or just use the button once.
+
 ## Blogger Embed (optional — "genuine" blogspot home)
 
-`blogger-page.html` is the whole forms portal packaged to paste into a **Blogger Page**:
+`blogger-page.html` is now a **tiny iframe wrapper** (regenerated by `node build.js`) that loads the real portal from Cloudflare — no more duplicated code:
 
 1. Blogger dashboard → **Pages → New Page**
 2. In the editor toolbar click the **HTML view** icon
 3. Paste the **entire** contents of `blogger-page.html`
 4. Title the page **Forms**, then **Publish**
-5. Your portal is now live at `https://laghubittakhabar.blogspot.com/p/forms.html` — forms still submit to your Google Sheet via `SCRIPT_URL`
+5. Your portal is now live at `https://laghubittakhabar.blogspot.com/p/forms.html` — forms still submit to your Google Sheet via the Apps Script `scriptUrl` in `site-config.json`
 
 Notes:
-- The logo image currently loads from `https://laghubitta-khabar-forms.pages.dev/logo.webp`. To make it fully independent of Cloudflare, upload `logo.webp` into a Blogger post/media and replace that URL (or re-generate the file).
+- The iframe fills the whole page; the logo and all assets load from Cloudflare/GitHub Pages.
 - Blogger gives page URLs the `/p/<name>.html` format. A clean `/forms` path needs a custom domain attached to Blogger.
 - The blog theme wraps the page (header/sidebar). Pick a minimal theme or hide the header if you want a full-screen look.
 
@@ -179,15 +223,21 @@ Notes:
 - **Step 1 (done):** Forms portal (4 forms) + Google Sheet database + Admin Studio UI
 - **Step 2 (done):** Confessions review & publish queue (Blogger + Facebook)
 - **Step 3 (done):** Content Studio (Gemini AI article generation + manual publish)
-- **Step 4:** Full Laghubitta Khabar platform redesign
+- **Step 4 (done):** Single-source build (`node build.js`), Cloudflare Pages hosting, CV generator, placement tracking + SENNA Alumni flag
+- **Step 5:** Full Laghubitta Khabar platform redesign
 
 The Studio's **Settings** tab stores `BLOG_ID`, `BLOGGER_TOKEN` (+ refresh token / client id / client secret), `FB_PAGE_ID`, `FB_TOKEN`, `GEMINI_API_KEY`, `GEMINI_MODEL`, and `FOLDER_ID` in Script Properties, ready for Steps 2-4.
 
 ## Project Files
 
-- `Code.gs` — Apps Script backend (form intake, admin auth, REST + Studio routes)
-- `studio.html` — Admin Studio UI (paste into Apps Script as an HTML file named `Index`)
-- `index.html` — public forms portal on GitHub Pages / Cloudflare Pages
-- `blogger-page.html` — same portal packaged to paste into a Blogger Page
+- `Code.gs` — Apps Script backend (form intake, admin auth, REST + Studio routes, CV generation, placement)
+- `src/portal.html` — public forms portal source (uses `__SCRIPT_URL__`; built into `index.html`)
+- `studio.html` — Admin Studio UI (paste `appscript/studio.html` into Apps Script as an HTML file named `Index`)
+- `index.html` — generated public portal (GitHub Pages root; re-run `node build.js` to refresh)
+- `build.js` + `site-config.json` + `src/blogger-template.html` — single-source build pipeline
+- `appscript/` — generated paste-ready copies (run `node build.js`)
+- `dist/` — generated Cloudflare Pages output (run `node build.js`)
+- `blogger-page.html` — generated iframe wrapper for Blogger
+- `wrangler.toml` — Cloudflare Pages direct-upload config
 - `logo.webp` — portal logo
 - `README.md` — this file

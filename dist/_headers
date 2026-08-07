@@ -1,0 +1,7 @@
+/
+  X-Frame-Options: SAMEORIGIN
+  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/*.webp
+  Cache-Control: public, max-age=604800

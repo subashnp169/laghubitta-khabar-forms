@@ -1,0 +1,6 @@
+# Cloudflare Pages — direct upload config (optional).
+# Simplest path: npx wrangler pages deploy dist
+#   (run `npx wrangler login` once; project name below or use --project-name)
+name = "laghubittakhabar"
+compatibility_date = "2026-08-07"
+pages_build_output_dir = "./dist"
