@@ -24,6 +24,9 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy-2);
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-ghost{background:#fff;border:1.5px solid var(--navy-2);color:var(--navy-2);padding:9px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
 .btn-ghost:hover{background:var(--navy-2);color:#fff}
+.btn-mini{background:#fff;border:1.5px solid var(--ok);color:var(--ok);padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s}
+.btn-mini:hover{background:var(--ok);color:#fff}
+.btn-mini:disabled{opacity:.5;cursor:not-allowed}
 .msg{display:none;padding:11px 13px;border-radius:9px;font-size:12px;margin-top:12px}
 .msg.show{display:block}
 .msg.ok{background:#eaf6ee;color:var(--ok);border:1px solid #bfe3c9}
@@ -445,13 +448,16 @@ function loadRecords(){
     var rows=d.rows||[];
     if(!rows.length){ wrap.innerHTML='<div class="empty">No records yet.</div>'; }
     else {
-      var keys=Object.keys(rows[0]);
+      var keys=Object.keys(rows[0]).filter(function(k){return k!=="_row";});
+      var canPromote=(CUR==="job"||CUR==="help");
       var html="<table><thead><tr>";
       keys.forEach(function(k){ html+="<th>"+esc(k)+"</th>"; });
+      if(canPromote) html+="<th>Action</th>";
       html+="</tr></thead><tbody>";
       rows.forEach(function(r){
         html+="<tr>";
         keys.forEach(function(k){ html+="<td>"+esc(r[k])+"</td>"; });
+        if(canPromote) html+='<td><button class="btn-mini" onclick="promoteSenna('+r._row+',this)">&#10133; SENNA</button></td>';
         html+="</tr>";
       });
       html+="</tbody></table>";
@@ -459,6 +465,19 @@ function loadRecords(){
     }
     document.getElementById("countNote").textContent="Showing latest "+rows.length+" of "+(d.total||rows.length)+" records";
   });
+}
+function promoteSenna(rowId,btn){
+  if(!confirm("Push this record into the SENNA Network membership sheet?")) return;
+  btn.disabled=true;
+  run("studioPromoteToSenna",[TOKEN,CUR,rowId],function(d){
+    btn.disabled=false;
+    if(d.status==="ok"){
+      alert(d.message||"Promoted to SENNA Network.");
+      loadRecords(); loadStats();
+    } else {
+      alert(d.message||"Promotion failed.");
+    }
+  },function(){ btn.disabled=false; });
 }
 function refreshRecords(){ loadRecords(); }
 

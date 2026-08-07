@@ -68,7 +68,7 @@ function doGet(e) {
     const cfg = SHEETS[e.parameter.form];
     if (!cfg) return error_("Unknown form");
     const limit = parseInt(e.parameter.limit || "500", 10);
-    return json_({ total: countRows_(cfg.name), rows: getSheetData_(cfg.name, limit) });
+    return json_({ total: countRows_(cfg.name), rows: getSheetData_(cfg.name, limit, cfg.headers.length) });
   }
   if (action === "export") {
     const cfg = SHEETS[e.parameter.form];
@@ -167,22 +167,39 @@ function getOrCreateSheet_(name, headers) {
   return sheet;
 }
 
-function getSheetData_(name, limit) {
+function getSheetData_(name, limit, numCols) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(name);
   if (!sheet) return [];
   const lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
-  const numCols = sheet.getLastColumn();
-  const headers = sheet.getRange(1, 1, 1, numCols).getValues()[0];
-  const want = Math.min(limit, lastRow - 1);
-  const start = lastRow - want + 1;
-  const values = sheet.getRange(start, 1, want, numCols).getValues().reverse();
-  return values.map(function (row) {
-    const obj = {};
+  const cols = Math.max(1, Math.min(numCols || sheet.getLastColumn(), sheet.getLastColumn()));
+  const headers = sheet.getRange(1, 1, 1, cols).getValues()[0];
+  const max = lastRow - 1;
+  const want = Math.min(limit || 500, max);
+  let out = collectRows_(sheet, lastRow - want + 1, want, cols, headers);
+  if (!out.length && max > want) {
+    out = collectRows_(sheet, 2, Math.min(limit || 500, max), cols, headers);
+  }
+  return out;
+}
+
+function collectRows_(sheet, start, count, cols, headers) {
+  const values = sheet.getRange(start, 1, count, cols).getValues();
+  const out = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const row = values[i];
+    let hasAny = false;
+    for (let j = 0; j < row.length; j++) {
+      const v = row[j];
+      if (v !== "" && v != null) { hasAny = true; break; }
+    }
+    if (!hasAny) continue;
+    const obj = { _row: start + i };
     headers.forEach(function (h, j) { obj[h] = row[j]; });
-    return obj;
-  });
+    out.push(obj);
+  }
+  return out;
 }
 
 function toCsv_(name, headers) {
@@ -264,10 +281,70 @@ function studioRecords(token, form, limit) {
   const cfg = SHEETS[form];
   if (!cfg) return { status: "error", message: "Unknown form" };
   try {
-    return { status: "ok", total: countRows_(cfg.name), rows: getSheetData_(cfg.name, limit || 500) };
+    return { status: "ok", total: countRows_(cfg.name), rows: getSheetData_(cfg.name, limit || 500, cfg.headers.length) };
   } catch (err) {
     return { status: "error", message: "Record load failed: " + err.message };
   }
+}
+
+function studioPromoteToSenna(token, form, rowId) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  const src = SHEETS[form];
+  if (!src || (form !== "job" && form !== "help")) {
+    return { status: "error", message: "Promotion is only available from Job Career Sathi and Client Help records." };
+  }
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const srcSheet = ss.getSheetByName(src.name);
+    if (!srcSheet) throw new Error("Source sheet not found");
+    const row = Number(rowId);
+    if (!row || row < 2 || row > srcSheet.getLastRow()) throw new Error("Invalid record row");
+
+    const values = srcSheet.getRange(row, 1, 1, src.headers.length).getValues()[0];
+    const cell = function (j) { return String(values[j] == null ? "" : values[j]).trim(); };
+
+    let name = cell(1), mobile = cell(2), email = "", district = "", institution = "";
+    let category = "Microfinance", profession = "", contribution = "", reason = "";
+
+    if (form === "job") {
+      email = cell(3);
+      district = cell(7);
+      profession = "Job Seeker";
+      reason = cell(11) ? "Help Needed: " + cell(11) : "Job Career Sathi";
+    } else {
+      district = cell(3);
+      institution = cell(4);
+      profession = cell(5) ? cell(5) : "Client";
+      reason = cell(6) ? "Issue: " + cell(6) : "Client Help";
+    }
+    if (!name) throw new Error("Record has no name to promote.");
+
+    const dup = findExistingSenna_(mobile, email);
+    if (dup) return { status: "error", message: "Already in SENNA Network (sheet row " + dup + ")." };
+
+    const sennaSheet = getOrCreateSheet_(SHEETS.senna.name, SHEETS.senna.headers);
+    sennaSheet.appendRow([new Date(), name, mobile, email, district, category, institution, profession, contribution, reason, "Yes"]);
+    return { status: "ok", message: "Promoted " + name + " into SENNA Network.", sennaRow: sennaSheet.getLastRow() };
+  } catch (err) {
+    return { status: "error", message: "Promotion failed: " + err.message };
+  }
+}
+
+function findExistingSenna_(mobile, email) {
+  const sheet = getOrCreateSheet_(SHEETS.senna.name, SHEETS.senna.headers);
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return null;
+  const mobiles = sheet.getRange(2, 3, lastRow - 1, 1).getValues();
+  const emails = sheet.getRange(2, 4, lastRow - 1, 1).getValues();
+  const m = String(mobile || "").trim().toLowerCase();
+  const e = String(email || "").trim().toLowerCase();
+  for (let i = 0; i < lastRow - 1; i++) {
+    const rm = String(mobiles[i][0] == null ? "" : mobiles[i][0]).trim().toLowerCase();
+    const re = String(emails[i][0] == null ? "" : emails[i][0]).trim().toLowerCase();
+    if (m && rm && rm === m) return i + 2;
+    if (e && re && re === e) return i + 2;
+  }
+  return null;
 }
 
 function studioExport(token, form) {
