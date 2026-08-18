@@ -11,11 +11,12 @@
  */
 
 const SHEETS = {
-  job: { name: "JobCareer", headers: ["Timestamp","Full Name","Mobile","Email","Academic Qualification","Experience","Current Status","Home District","Preferred Province","Preferred City","Desired Sector","Help Needed","Notes","Placement Status","Placed Date","Mentor/Referrer"] },
+  job: { name: "JobCareer", headers: ["Timestamp","Full Name","Mobile","Email","Academic Qualification","Experience","Current Status","Home District","Preferred Province","Preferred City","Desired Sector","Help Needed","Notes","Placement Status","Placed Date","Mentor/Referrer","Referred By"] },
   help: { name: "ClientHelp", headers: ["Timestamp","Name","Mobile","Home District","Institution Name","Institution Type","Issue Type","Issue Description","Preferred Contact Time","Contact Method"] },
-  senna: { name: "SennaNetwork", headers: ["Timestamp","Full Name","Mobile","Email","Home District","Category","Institution","Profession","Contribution","Reason","Consent","Member Type"] },
+  senna: { name: "SennaNetwork", headers: ["Timestamp","Full Name","Mobile","Email","Home District","Category","Institution","Profession","Contribution","Reason","Consent","Member Type","Total Earned","Wallet Balance"] },
   confession: { name: "Confessions", headers: ["Timestamp","Category","Confession","Nickname","District","Status","Published"] },
-  articles: { name: "Articles", headers: ["Timestamp","Title","Labels","Status","Source Link","Body HTML","Blogger URL","Facebook URL"] }
+  articles: { name: "Articles", headers: ["Timestamp","Title","Labels","Status","Source Link","Body HTML","Blogger URL","Facebook URL"] },
+  earnings: { name: "HelperEarnings", headers: ["Timestamp","Helper Mobile","Helper Name","Action","Reference Form","Reference Row","Amount","Status","Notes"] }
 };
 
 const SALT = "lk-senna-network-2026";
@@ -94,7 +95,7 @@ function submitRow_(form, data) {
       timestamp, data.fullName, data.mobile, data.email,
       data.academic, data.experience, data.status, data.district,
       data.province, data.city, data.sector, data.helpNeeded, data.notes,
-      "New", "", ""
+      "New", "", "", data.referredBy || ""
     ]);
   } else if (form === "help") {
     sheet.appendRow([
@@ -106,7 +107,7 @@ function submitRow_(form, data) {
     sheet.appendRow([
       timestamp, data.fullName, data.mobile, data.email, data.district,
       data.category || "Microfinance", data.institution, data.profession,
-      data.contribution, data.reason, data.consent, "Member"
+      data.contribution, data.reason, data.consent, "Member", 0, 0
     ]);
   } else if (form === "confession") {
     ensureConfessionColumns_();
@@ -492,11 +493,106 @@ function studioSetPlacement(token, rowId, status, mentor) {
       } else {
         note += " (Not found in SENNA Network, so not marked Alumni.)";
       }
+      const refByIdx = headerIndex_(sheetRef, "Referred By");
+      if (refByIdx >= 0) {
+        const refMobile = String(sheetRef.getRange(row, refByIdx + 1).getValue() || "").trim();
+        if (refMobile) {
+          const refSenna = findExistingSenna_(refMobile, "");
+          if (refSenna) {
+            const refSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.senna.name);
+            const refVals = refSheet.getRange(refSenna, 1, 1, refSheet.getLastColumn()).getValues()[0];
+            const refName = String(refVals[1] == null ? "" : refVals[1]).trim();
+            const earnSheet = getOrCreateSheet_(SHEETS.earnings.name, SHEETS.earnings.headers);
+            earnSheet.appendRow([new Date(), refMobile, refName, "Placement Referral", "job", row, 1000, "Pending", "Auto: " + (sheetRef.getRange(row, 2).getValue() || "candidate") + " placed"]);
+            const teIdx = headerIndex_(refSheet, "Total Earned");
+            const wbIdx = headerIndex_(refSheet, "Wallet Balance");
+            if (teIdx >= 0) {
+              const cur = Number(refSheet.getRange(refSenna, teIdx + 1).getValue() || 0);
+              refSheet.getRange(refSenna, teIdx + 1).setValue(cur + 1000);
+            }
+            if (wbIdx >= 0) {
+              const cur = Number(refSheet.getRange(refSenna, wbIdx + 1).getValue() || 0);
+              refSheet.getRange(refSenna, wbIdx + 1).setValue(cur + 1000);
+            }
+            note += " Referral earning tracked for " + refName + " (Rs. 1000).";
+          }
+        }
+      }
     }
     return { status: "ok", message: note };
   } catch (err) {
     return { status: "error", message: "Placement update failed: " + err.message };
   }
+}
+
+// ── LEAN EARNINGS: referral + placement payments ─────────────────
+function studioTrackReferral(token, helperMobile, helperName, action, refForm, refRow, amount, notes) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    const sheet = getOrCreateSheet_(SHEETS.earnings.name, SHEETS.earnings.headers);
+    sheet.appendRow([new Date(), helperMobile, helperName || "", action, refForm, refRow, amount, "Pending", notes || ""]);
+    return { status: "ok", message: "Referral tracked." };
+  } catch (err) {
+    return { status: "error", message: "Tracking failed: " + err.message };
+  }
+}
+
+function studioGetEarnings(token) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    const sheet = getOrCreateSheet_(SHEETS.earnings.name, SHEETS.earnings.headers);
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { status: "ok", rows: [], totalPending: 0, totalReleased: 0 };
+    const headers = data[0];
+    const idx = {};
+    headers.forEach(function (h, j) { idx[h] = j; });
+    let pending = 0, released = 0;
+    const rows = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const status = String(row[idx["Status"]] || "Pending");
+      const amount = Number(row[idx["Amount"]] || 0);
+      if (status === "Pending") pending += amount;
+      if (status === "Released") released += amount;
+      rows.push({
+        _row: i + 1,
+        timestamp: fmtDate_(row[idx["Timestamp"]]),
+        helperMobile: String(row[idx["Helper Mobile"]] || ""),
+        helperName: String(row[idx["Helper Name"]] || ""),
+        action: String(row[idx["Action"]] || ""),
+        refForm: String(row[idx["Reference Form"]] || ""),
+        refRow: row[idx["Reference Row"]],
+        amount: amount,
+        status: status,
+        notes: String(row[idx["Notes"]] || "")
+      });
+    }
+    return { status: "ok", rows: rows.reverse(), totalPending: pending, totalReleased: released };
+  } catch (err) {
+    return { status: "error", message: "Load earnings failed: " + err.message };
+  }
+}
+
+function studioReleasePayment(token, rowId) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  try {
+    const sheet = getOrCreateSheet_(SHEETS.earnings.name, SHEETS.earnings.headers);
+    const row = Number(rowId);
+    if (!row || row < 2 || row > sheet.getLastRow()) throw new Error("Invalid record row");
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const idx = {};
+    headers.forEach(function (h, j) { idx[h] = j; });
+    sheet.getRange(row, idx["Status"] + 1).setValue("Released");
+    sheet.getRange(row, idx["Notes"] + 1).setValue((sheet.getRange(row, idx["Notes"] + 1).getValue() || "") + " | Released on " + fmtDate_(new Date()));
+    return { status: "ok", message: "Payment marked as released." };
+  } catch (err) {
+    return { status: "error", message: "Release failed: " + err.message };
+  }
+}
+
+function studioExportEarnings(token) {
+  if (!authOk_(token)) return { status: "error", message: "Unauthorized" };
+  return { status: "ok", csv: toCsv_(SHEETS.earnings.name, SHEETS.earnings.headers) };
 }
 
 function studioExport(token, form) {

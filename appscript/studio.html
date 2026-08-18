@@ -129,6 +129,7 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
     <button class="nav-item" id="nav-settings" onclick="nav('settings')">&#9881; <span class="txt">Settings</span></button>
     <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px"></div>
     <button class="nav-item" id="nav-content" onclick="nav('content')">&#9997; <span class="txt">Content Studio</span></button>
+    <button class="nav-item" id="nav-earn" onclick="nav('earn')">&#128176; <span class="txt">Earn</span></button>
     <button class="nav-item locked" title="Step 4"><span class="txt">&#127760; Platform Redesign</span><span class="tag">Step 4</span></button>
     <div class="foot">Laghubitta Khabar<br>SENNA Network Initiative</div>
   </div>
@@ -276,6 +277,26 @@ textarea{min-height:130px;resize:vertical;font-family:ui-monospace,Consolas,mono
       </div>
     </div>
 
+    <!-- EARN -->
+    <div class="page" id="page-earn">
+      <h1>Earn</h1>
+      <p class="sub">Referral &amp; placement payments — track, review, release</p>
+      <div class="stats" id="earnCards"></div>
+      <div class="card" style="margin-top:18px">
+        <h2>Pending Payments</h2>
+        <div class="table-wrap" id="earnTableWrap"><div class="empty">Loading...</div></div>
+        <div class="count-note" id="earnCountNote"></div>
+      </div>
+      <div class="card">
+        <h2>All Transactions</h2>
+        <div class="tools">
+          <button class="btn-ghost" onclick="loadEarnings()">&#8635; Refresh</button>
+          <button class="btn-ghost" onclick="exportEarningsCSV()">&#11015; Export CSV</button>
+        </div>
+        <div class="table-wrap" id="earnAllWrap"><div class="empty">Loading...</div></div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <h1>Settings</h1>
@@ -398,13 +419,14 @@ var CUR_PAGE = "dash";
 function nav(name){
   CUR_PAGE=name;
   document.querySelectorAll(".nav-item").forEach(function(b){b.classList.remove("on");});
-  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("on");});
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("on")});
   document.getElementById("nav-"+name).classList.add("on");
   document.getElementById("page-"+name).classList.add("on");
   if(name==="dash") loadStats();
   if(name==="records") loadRecords();
   if(name==="confess") loadConfessions();
   if(name==="content") loadArticles();
+  if(name==="earn") loadEarnings();
   if(name==="settings") loadSettings();
 }
 
@@ -943,6 +965,61 @@ function saveSettings(){
     btn.disabled=false;
     if(d.status==="ok"){ setTimeout(loadSettings,600); }
   },function(){ btn.disabled=false; });
+}
+
+/* ---------- EARN ---------- */
+function loadEarnings(){
+  run("studioGetEarnings",[TOKEN],function(d){
+    if(d.status!=="ok"){ document.getElementById("earnCards").innerHTML='<div class="empty">'+esc(d.message)+"</div>"; return; }
+    var pending=Number(d.totalPending||0), released=Number(d.totalReleased||0);
+    document.getElementById("earnCards").innerHTML=
+      '<div class="stat green"><b>Rs. '+pending.toLocaleString()+'</b><span>Pending Payments</span></div>'
+      +'<div class="stat" style="border-top-color:var(--ok)"><b>Rs. '+released.toLocaleString()+'</b><span>Released</span></div>';
+    renderEarnTable(d.rows||[], "earnTableWrap", true);
+    renderEarnTable(d.rows||[], "earnAllWrap", false);
+  });
+}
+function renderEarnTable(rows, wrapId, showRelease){
+  var wrap=document.getElementById(wrapId);
+  if(!rows.length){ wrap.innerHTML='<div class="empty">No transactions yet.</div>'; return; }
+  var html="<table><thead><tr><th>Date</th><th>Helper</th><th>Action</th><th>Ref</th><th>Amount</th><th>Status</th>"+(showRelease?"<th>Release</th>":"")+"</tr></thead><tbody>";
+  rows.forEach(function(r){
+    var st="st-"+(r.status||"pending").toLowerCase();
+    html+="<tr>"
+      +"<td>"+esc(r.timestamp)+"</td>"
+      +"<td>"+esc(r.helperName||r.helperMobile)+"<br><span style='color:#999;font-size:10px'>"+esc(r.helperMobile)+"</span></td>"
+      +"<td>"+esc(r.action)+"</td>"
+      +"<td>"+esc(r.refForm)+" #"+r.refRow+"</td>"
+      +"<td><b>Rs. "+Number(r.amount||0).toLocaleString()+"</b></td>"
+      +"<td><span class='conf-status "+st+"'>"+esc(r.status)+"</span></td>";
+    if(showRelease && r.status==="Pending"){
+      html+='<td><button class="btn-mini" onclick="releasePayment('+r._row+',this)">&#10003; Release</button></td>';
+    } else {
+      html+="<td>"+(r.status==="Released"?"&#10003;":"")+"</td>";
+    }
+    html+="</tr>";
+  });
+  html+="</tbody></table>";
+  wrap.innerHTML=html;
+}
+function releasePayment(rowId,btn){
+  if(!confirm("Mark this payment as released?")) return;
+  btn.disabled=true;
+  run("studioReleasePayment",[TOKEN,rowId],function(d){
+    btn.disabled=false;
+    alert(d.status==="ok" ? (d.message||"Released.") : (d.message||"Failed."));
+    if(d.status==="ok") loadEarnings();
+  },function(){ btn.disabled=false; });
+}
+function exportEarningsCSV(){
+  run("studioExportEarnings",[TOKEN],function(d){
+    if(d.status!=="ok"){ alert(d.message||"Export failed"); return; }
+    var blob=new Blob(["\ufeff"+d.csv],{type:"text/csv;charset=utf-8"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="earnings_export.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
 }
 
 /* ---------- BOOT ---------- */
